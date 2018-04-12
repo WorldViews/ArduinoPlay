@@ -1,0 +1,37 @@
+
+<!doctype html>
+<html>
+<head>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+  <script>
+    $(function() {
+      var socket = io.connect("http://localhost:3000");
+      var display = $("h1 span");
+      var display = $("h1 span");
+      var servoDisplay = $("#servo");
+      $("#slider").on("input",function() {
+        var val = $(this).val();
+        // Full Cycle: HIGH -> LOW, 2 phases
+        display.text((1000 / (val * 2)).toFixed(2));
+        console.log("sending change:interval "+val);
+        socket.emit("change:interval", val);
+      });
+      $("#servoSlider").on("input",function() {
+        var val = $(this).val();
+        // Full Cycle: HIGH -> LOW, 2 phases
+        servoDisplay.text(val);
+        console.log("sending servo:value "+val);
+        socket.emit("servo:value", val);
+      });
+    });
+  </script>
+</head>
+<body>
+  <h1>Blink speed: <span>0.50</span>hz</h1>
+  Fast <input id="slider" type="range" min="100" max="1000" value="1000"> Slow
+  <p>
+  Servo: <span id="servo">0.50</span><br>
+  0 <input id="servoSlider" type="range" min="0" max="180" value="90"> 180
+</body>
+</html>
