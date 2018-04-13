@@ -8,8 +8,6 @@
     $(function() {
       var socket = io.connect("http://localhost:3000");
       var display = $("h1 span");
-      var display = $("h1 span");
-      var servoDisplay = $("#servo");
       $("#slider").on("input",function() {
         var val = $(this).val();
         // Full Cycle: HIGH -> LOW, 2 phases
@@ -17,12 +15,14 @@
         console.log("sending change:interval "+val);
         socket.emit("change:interval", val);
       });
+      //
+      var servoDisplay = $("#servo");
       $("#servoSlider").on("input",function() {
         var val = $(this).val();
         // Full Cycle: HIGH -> LOW, 2 phases
         servoDisplay.text(val);
         console.log("sending servo:value "+val);
-        socket.emit("servo:value", val);
+        socket.emit("servo.set", val);
       });
     });
   </script>
