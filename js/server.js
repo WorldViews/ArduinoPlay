@@ -71,4 +71,9 @@ app.get("/realtime", function (req, res) {
   res.sendFile(__dirname + "/realtime.html");
 });
 
+app.get("/*", function (req, res) {
+    console.log("*** "+req.path);
+    res.sendFile(__dirname + req.path);
+});
+
 server.listen(3000);
