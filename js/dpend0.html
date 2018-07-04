@@ -8,11 +8,13 @@
     <meta name="description" content="How to build a spring structure.">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
 </head>
 <body>
     <script>
 
-      var motor = null;
+var motor = null;
+var speed = 5;
       
         // Create demo application
         var app = new p2.WebGLRenderer(function(){
@@ -25,15 +27,9 @@
 
             world.solver.tolerance = 0.001;
 
-            var bodies = [];
-            var M=10,
-                timeStep = 1/60,
-                k=1000,
-                d=10,
-                l=0.35,
-                m=1;
             var x0 = 2;
-        
+            var L1 = 0.25;
+            var L2 = 1;
             // Create ground
             var planeShape = new p2.Plane();
             var plane = new p2.Body({
@@ -43,32 +39,32 @@
             world.addBody(plane);
 
             // Create capsules connected with angular spring
-            var capsuleShapeA = new p2.Capsule({ length: 1, radius:  0.1 });
-            var capsuleShapeB = new p2.Capsule({ length: 1, radius:  0.1 });
+            var capsuleShape1 = new p2.Capsule({ length: L1, radius:  0.1 });
+            var capsuleShape2 = new p2.Capsule({ length: L2, radius:  0.1 });
 
-            var capsuleBodyA = new p2.Body({
+            var capsuleBody1 = new p2.Body({
                 mass: 1,
-                position : [x0,1]
+                position : [x0, 1]
             });
-            var capsuleBodyB = new p2.Body({
+            capsuleBody1.addShape(capsuleShape1);
+
+            var capsuleBody2 = new p2.Body({
                 mass: 1,
-                position : [x0+1,1]
+                position : [x0+L1, 1]
             });
+            capsuleBody2.addShape(capsuleShape2);
 
-            capsuleBodyA.addShape(capsuleShapeA);
-            capsuleBodyB.addShape(capsuleShapeB);
+            world.addBody(capsuleBody1);
+            world.addBody(capsuleBody2);
 
-            world.addBody(capsuleBodyA);
-            world.addBody(capsuleBodyB);
-
-            var pin0 = new p2.RevoluteConstraint(plane, capsuleBodyA, {
-                localPivotA: [x0-0.5, 2.5],
-                localPivotB: [-0.5, 0],
+            var pin0 = new p2.RevoluteConstraint(plane, capsuleBody1, {
+                localPivotA: [x0-L1/2.0, 2.5],
+                localPivotB: [-L1/2.0, 0],
                 collideConnected:false
             });
-            var revolute = new p2.RevoluteConstraint(capsuleBodyA, capsuleBodyB, {
-                localPivotA: [0.5, 0],
-                localPivotB: [-0.5, 0],
+            var revolute = new p2.RevoluteConstraint(capsuleBody1, capsuleBody2, {
+                localPivotA: [L1/2.0, 0],
+                localPivotB: [-L2/2.0, 0],
                 collideConnected:false
             });
             world.addConstraint(pin0);
@@ -80,6 +76,27 @@
             this.frame(3,0,8,8);
         });
 
+      var ASCII = {};
+      ASCII.A = 65;
+      ASCII.S = 83;
+      $(document).ready(function() {
+         console.log("**** document.ready");
+         $(document).keydown(function(e) {
+             console.log("**** keydown "+e.which);
+             if (e.which == ASCII.A) {
+                console.log("*** a ****");
+                motor.setMotorSpeed(speed);
+             }
+             else if (e.which == ASCII.S) {
+                console.log("*** b ****");
+                motor.setMotorSpeed(-speed);
+             }
+         });
+         $(document).keyup(function(e) {
+             console.log("**** keyup "+e.which);
+             motor.setMotorSpeed(0);
+         });
+      });
     </script>
-</bodyBody>
+</body>
 </html>
