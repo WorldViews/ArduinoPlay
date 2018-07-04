@@ -25,9 +25,15 @@
 
             world.solver.tolerance = 0.001;
 
+            var bodies = [];
+            var M=10,
+                timeStep = 1/60,
+                k=1000,
+                d=10,
+                l=0.35,
+                m=1;
             var x0 = 2;
-            var L1 = 0.25;
-            var L2 = 1;
+        
             // Create ground
             var planeShape = new p2.Plane();
             var plane = new p2.Body({
@@ -37,32 +43,32 @@
             world.addBody(plane);
 
             // Create capsules connected with angular spring
-            var capsuleShape1 = new p2.Capsule({ length: L1, radius:  0.1 });
-            var capsuleShape2 = new p2.Capsule({ length: L2, radius:  0.1 });
+            var capsuleShapeA = new p2.Capsule({ length: 1, radius:  0.1 });
+            var capsuleShapeB = new p2.Capsule({ length: 1, radius:  0.1 });
 
-            var capsuleBody1 = new p2.Body({
+            var capsuleBodyA = new p2.Body({
                 mass: 1,
-                position : [x0, 1]
+                position : [x0,1]
             });
-            capsuleBody1.addShape(capsuleShape1);
-
-            var capsuleBody2 = new p2.Body({
+            var capsuleBodyB = new p2.Body({
                 mass: 1,
-                position : [x0+L1, 1]
+                position : [x0+1,1]
             });
-            capsuleBody2.addShape(capsuleShape2);
 
-            world.addBody(capsuleBody1);
-            world.addBody(capsuleBody2);
+            capsuleBodyA.addShape(capsuleShapeA);
+            capsuleBodyB.addShape(capsuleShapeB);
 
-            var pin0 = new p2.RevoluteConstraint(plane, capsuleBody1, {
-                localPivotA: [x0-L1/2.0, 2.5],
-                localPivotB: [-L1/2.0, 0],
+            world.addBody(capsuleBodyA);
+            world.addBody(capsuleBodyB);
+
+            var pin0 = new p2.RevoluteConstraint(plane, capsuleBodyA, {
+                localPivotA: [x0-0.5, 2.5],
+                localPivotB: [-0.5, 0],
                 collideConnected:false
             });
-            var revolute = new p2.RevoluteConstraint(capsuleBody1, capsuleBody2, {
-                localPivotA: [L1/2.0, 0],
-                localPivotB: [-L2/2.0, 0],
+            var revolute = new p2.RevoluteConstraint(capsuleBodyA, capsuleBodyB, {
+                localPivotA: [0.5, 0],
+                localPivotB: [-0.5, 0],
                 collideConnected:false
             });
             world.addConstraint(pin0);
