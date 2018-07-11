@@ -12,12 +12,15 @@ var radius = 0.05;
 var app = null;
 
 function setup() {
-    var app = new p2.WebGLRenderer(initFun);
+    var opts = {foo: 25, hideGUI: true};
+    var app = new p2.WebGLRenderer(initFun, opts);
     setupKeys();
 }
 
-function initFun(){
-
+function initFun(opts)
+{
+    console.log("initFun", opts);
+    
     var world = new p2.World({
         gravity : [0,-5]
     });
@@ -144,6 +147,14 @@ function addPend(world, ground, x0, h, mass, lengths, r)
     return pins;
 }
 
+function setMotorSpeeds(speed, mots)
+{
+    mots = mots || motors;
+    mots.forEach(motor => {
+        motor.setMotorSpeed(speed);
+    });
+}
+
 function setupKeys() {
       $(document).ready(function() {
          console.log("**** document.ready");
@@ -171,5 +182,4 @@ function setupKeys() {
       });
 }
 
-setup();
 
