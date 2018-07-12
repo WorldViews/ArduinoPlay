@@ -36,6 +36,10 @@
         //console.log("light.change"+JSON.stringify(data));
         $("#pin9").html(JSON.stringify(data));
       });
+      socket.on("status", data => {
+        console.log("status"+JSON.stringify(data));
+        $("#status").html(JSON.stringify(data));
+      });
     });
   </script>
 </head>
@@ -52,6 +56,7 @@
     Light: <span id="light_lux"></span><br>
     Pin9: <span id="pin9"></span><br>
     Accel: <span id="acc"></span><br>
+    Status: <span id="status"></span><br>
   </p>
 </body>
 </html>

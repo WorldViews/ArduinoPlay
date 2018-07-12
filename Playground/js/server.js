@@ -9,8 +9,10 @@ var five = require("johnny-five");
 var sock = null;
 var pin = null;
 var light = null;
+var led = null;
+var servo = null;
 //var board = new five.Board();
-var board;
+var board = null;
 
 function setupBoard() {
     board = new five.Board({
@@ -26,8 +28,8 @@ function setupBoard() {
 
     board.on("ready", function() {
         console.log("**** board ready ****");
-        var led = new five.Led(13);
-        var servo = new five.Servo(12);
+        led = new five.Led(13);
+        servo = new five.Servo(12);
     //    pin = new five.Pin({pin: 10, mode: five.Pin.INPUT});
         pin = new five.Pin("A9");
         light = new five.Light("A5");
@@ -68,6 +70,7 @@ function setupBoard() {
                 }
             });
         }
+        /*
         io.on("connection", function(socket) {
             sock = socket;
             console.log("Got connection...");
@@ -80,6 +83,7 @@ function setupBoard() {
                 servo.to(data);
             });
         });
+        */
     });
 }
 
@@ -104,7 +108,44 @@ app.get("/*", function (req, res) {
     res.sendFile(__dirname + req.path);
 });
 
-setupBoard();
+var tickCount = 0;
+
+function heartbeat() {
+    tickCount++;
+    console.log("tick... "+tickCount);
+    if (sock) {
+        msg = {type: 'status', gen: tickCount, haveBoard: false};
+        if (pin)
+            msg.haveBoard = true;
+        console.log("sending "+JSON.stringify(msg));
+        sock.emit("status", msg);
+    }
+}
+
+//setupBoard();
 var argv = process.argv;
+var port = 3000;
+//var port = 8089;
+var addr = "0.0.0.0";
 console.log("argv:", argv);
-server.listen(3000);
+
+setupBoard();
+io.on("connection", function(socket) {
+    sock = socket;
+    console.log("Got connection...");
+    socket.on("change:interval", function(data) {
+        console.log("data: "+data);
+        led.blink(data);
+    });
+    socket.on("servo.set", function(data) {
+        //console.log("servo value: "+data);
+        if (servo)
+            servo.to(data);
+        else
+            console.log("No servo");
+    });
+});
+
+console.log("listening on "+addr+" port: "+port);
+server.listen(port, addr);
+setInterval(heartbeat, 2000);
