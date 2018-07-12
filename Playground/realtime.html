@@ -24,6 +24,18 @@
         console.log("sending servo:value "+val);
         socket.emit("servo.set", val);
       });
+      socket.on("light.change", data => {
+        //console.log("light.change"+JSON.stringify(data));
+        $("#light_lux").html(data.lux);
+      });
+      socket.on("acc.change", data => {
+        //console.log("light.change"+JSON.stringify(data));
+        $("#acc").html(JSON.stringify(data));
+      });
+      socket.on("pin.change", data => {
+        //console.log("light.change"+JSON.stringify(data));
+        $("#pin9").html(JSON.stringify(data));
+      });
     });
   </script>
 </head>
@@ -34,7 +46,12 @@
   <p>
   Servo: <span id="servo">0.50</span><br>
   0 <input id="servoSlider" type="range" min="0" max="180" value="90"
-              style="width:400px;"> Slow
-           > 180
+              style="width:400px;">
+            180
+  <p>
+    Light: <span id="light_lux"></span><br>
+    Pin9: <span id="pin9"></span><br>
+    Accel: <span id="acc"></span><br>
+  </p>
 </body>
 </html>
