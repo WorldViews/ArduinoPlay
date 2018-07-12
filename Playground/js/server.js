@@ -1,9 +1,10 @@
 
-var express = require("express");
-var app = express();
-var bodyParser = require('body-parser');
-var server = require("http").Server(app);
-var io = require("socket.io")(server);
+var argv = process.argv;
+var port = 3000;
+//var port = 8089;
+var addr = "0.0.0.0";
+console.log("argv:", argv);
+
 var Playground = require("playground-io");
 var five = require("johnny-five");
 var sock = null;
@@ -13,6 +14,40 @@ var led = null;
 var servo = null;
 //var board = new five.Board();
 var board = null;
+
+var http = require("http");
+var express = require("express");
+var app = express();
+var bodyParser = require('body-parser');
+var server = http.createServer(app);
+
+/////////////////////////////////////////////////
+// web handling stuff...
+
+app.use(express.static(__dirname + "/.."));
+app.use(bodyParser.json());
+
+app.get("/", function (req, res) {
+  res.sendFile(__dirname + "/index.html");
+});
+
+app.get("/playBox", function (req, res) {
+    var str = __dirname + "/playBox.html"
+    res.sendFile(str);
+});
+
+app.get("/realtime", function (req, res) {
+  res.sendFile(__dirname + "/realtime.html");
+});
+
+app.get("/*", function (req, res) {
+    console.log("*** "+req.path);
+    res.sendFile(__dirname + req.path);
+});
+
+
+//////////////////////////////////////////////////////////////////
+// Board stuff
 
 function setupBoard() {
     board = new five.Board({
@@ -87,26 +122,6 @@ function setupBoard() {
     });
 }
 
-app.use(express.static(__dirname + "/.."));
-app.use(bodyParser.json());
-
-app.get("/", function (req, res) {
-  res.sendFile(__dirname + "/index.html");
-});
-
-app.get("/playBox", function (req, res) {
-    var str = __dirname + "/playBox.html"
-    res.sendFile(str);
-});
-
-app.get("/realtime", function (req, res) {
-  res.sendFile(__dirname + "/realtime.html");
-});
-
-app.get("/*", function (req, res) {
-    console.log("*** "+req.path);
-    res.sendFile(__dirname + req.path);
-});
 
 var tickCount = 0;
 
@@ -122,14 +137,9 @@ function heartbeat() {
     }
 }
 
-//setupBoard();
-var argv = process.argv;
-var port = 3000;
-//var port = 8089;
-var addr = "0.0.0.0";
-console.log("argv:", argv);
-
 setupBoard();
+//var io = require("socket.io")(server);
+var io = require("socket.io").listen(server);
 io.on("connection", function(socket) {
     sock = socket;
     console.log("Got connection...");
