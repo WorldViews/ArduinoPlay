@@ -5,8 +5,12 @@
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
   <script>
+    var server = document.location.origin;
+    console.log("server: "+server);
     $(function() {
-      var socket = io.connect("http://localhost:3000");
+      $("#server").html(server);
+      //var socket = io.connect("http://localhost:3000");
+      var socket = io.connect(server);
       var display = $("h1 span");
       $("#slider").on("input",function() {
         var val = $(this).val();
@@ -57,6 +61,7 @@
     Pin9: <span id="pin9"></span><br>
     Accel: <span id="acc"></span><br>
     Status: <span id="status"></span><br>
+    Server: <span id="server"></span><br>
   </p>
 </body>
 </html>
