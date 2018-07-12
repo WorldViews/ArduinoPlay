@@ -1,7 +1,7 @@
 
 var COMP_URL = "platonia:3000";
 
-class KineticGame {
+class KineticComponent {
     constructor(compName, compServer) {
         compServer = comp1Server || COMP_URL;
         console.log("comp1 server:", compServer);
@@ -16,6 +16,14 @@ class KineticGame {
     setServo(val) {
         console.log("setServo "+val);
         this.sock.emit("servo.set", val);
+    }
+
+}
+
+class KineticGame {
+    constructor(comp1Name, comp1Server) {
+        this.comp1 = new KineticComponent(comp1Name, comp1Server);
+        this.comp2 = new KineticComponent(comp1Name, "platonia:3000");
     }
 
     handleHand(body, jname) {
@@ -41,4 +49,10 @@ class KineticGame {
             }
         }
     }
+
+    setServo(sval) {
+        this.comp1.setServo(sval);
+        this.comp2.setServo(sval);
+    }
 }
+
