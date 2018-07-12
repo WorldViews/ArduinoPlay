@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Kinetic Distributed Game</title>
+</head>
+<body>
+<!--
+<button id="calibrate">Calibrate</button>
+&nbsp;
+<button id="seek0">|&lt;</button>
+&nbsp;
+<button id="go">Play</button>
+&nbsp;
+<button id="stop">Pause</button>
+&nbsp;
+-->
+<br>
+<span id="server" style="font-size:11px"></span>
+&nbsp;
+<span id="errMsg" style="font-size:12px;color:red"></span><br>
+<p>
+<span id="gameServer"></span><br>
+<span id="gameStatus"></span><br>
+<h4 id="bodies">Bodies: [hide]</h4>
+<div id="status"></div>
+<p>
+<hr align="left" width="200px">
+<div id="portalControl"></div>
+<p>
+<div id="yawDrag" style="background-color:#FFF0F0;width:720px;height:100px;"></div>
+<div id="log"></div>
+<script src="./js/sprintf.js"></script>
+<script src="./js/math.js"></script>
+<script src="../js/jquery-3.1.1.min.js"></script>
+<script src="../js/socket.io-1.4.5.js"></script>
+<script src="./js/KinWatch.js"></script>
+<script src="./js/KineticGameControl.js"></script>
+
+<script>
+
+  
+function getParameterByName(name) {
+    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
+var sioURL = "http://platonia:4000";
+//var sioURL = document.location.host;
+var serverName = getParameterByName("server");
+if (serverName) {
+    sioURL = "http://"+serverName+":4000";
+}
+var kinWatch = new KinWatch(sioURL);
+var pendServer = "hw0974:3000";
+var gameControl = new KineticGame(pendServer);
+
+function sendMessage(msg) { kinWatch.sendMessage(msg); }
+
+
+kinWatch.registerUpdater(() => {
+    $("#status").html(kinWatch.getStatusHTML());
+    gameControl.handleKinUpdate(kinWatch);
+});
+
+$("#bodies").click( e => {
+    console.log("**click**");
+    if ($("#bodies").html().includes("hide")) {
+        $("#bodies").html("Bodies: [show]");
+        $("#status").hide();
+    }
+    else {
+        $("#bodies").html("Bodies: [hide]");
+        $("#status").show();
+    }
+});
+
+var isDragging = false;
+
+var yawId = "#yawDrag";
+var downX = 0;
+var downY = 0;
+var E;
+$(yawId).mousedown(function(e) {
+    E = e;
+    downX = e.clientX;
+    downY = e.clientX;
+    isDragging = true;
+});
+$(yawId).mouseup(function() {
+    isDragging = false;
+});
+$(yawId).mousemove(function(e) {
+    if (!isDragging)
+       return;
+    var ht = 100;
+    var x = e.offsetX;
+    var y = e.offsetY - ht/2;
+    console.log("dragging... x: "+x+"  y:"+y);
+    var yaw = x / 2;
+    var pitch = - (90/50.0)*y;
+    console.log("dragging... yaw: "+yaw+" pitch: "+pitch);
+    gameControl.setServo(x);
+});
+
+$(document).ready(function() {
+    document.title = "Kin Pano: "+sioURL;
+    $("#server").html("server: "+sioURL);
+});
+</script>
+
+</body>
+</html>
