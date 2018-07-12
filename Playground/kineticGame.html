@@ -4,30 +4,23 @@
 	<title>Kinetic Distributed Game</title>
 </head>
 <body>
-<!--
-<button id="calibrate">Calibrate</button>
-&nbsp;
-<button id="seek0">|&lt;</button>
-&nbsp;
-<button id="go">Play</button>
-&nbsp;
-<button id="stop">Pause</button>
-&nbsp;
--->
 <br>
-<span id="server" style="font-size:11px"></span>
+Component1 Server:
+<!--<span id="comp1Server" style="font-size:11px"></span><br>
+-->
+<span id="comp1Server"></span><br>
 &nbsp;
+<span id="comp1Status"></span><br>
 <span id="errMsg" style="font-size:12px;color:red"></span><br>
 <p>
-<span id="gameServer"></span><br>
-<span id="gameStatus"></span><br>
+Kinect Server: <span id="kinectServer"></span><br>
 <h4 id="bodies">Bodies: [hide]</h4>
 <div id="status"></div>
 <p>
 <hr align="left" width="200px">
 <div id="portalControl"></div>
 <p>
-<div id="yawDrag" style="background-color:#FFF0F0;width:720px;height:100px;"></div>
+<canvas id="yawDrag" style="background-color:#F0F0FF;width:720px;height:360px;"></canvas>
 <div id="log"></div>
 <script src="./js/sprintf.js"></script>
 <script src="./js/math.js"></script>
@@ -44,18 +37,19 @@ function getParameterByName(name) {
     return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
 }
 
-var sioURL = "http://platonia:4000";
-//var sioURL = document.location.host;
-var serverName = getParameterByName("server");
-if (serverName) {
-    sioURL = "http://"+serverName+":4000";
+var kinectURL = "http://platonia:4000";
+//var kinectURL = document.location.host;
+var kinectServerName = getParameterByName("kinectServer");
+if (kinectServerName) {
+    kinectURL = "http://"+kinectServerName+":4000";
 }
-var kinWatch = new KinWatch(sioURL);
-var pendServer = "hw0974:3000";
-var gameControl = new KineticGame(pendServer);
+var kinWatch = new KinWatch(kinectURL);
+var comp1Server = "hw0974:3000";
+if (getParameterByName("comp1Server"))
+    comp1Server = getParameterByName("comp1Server");
+var gameControl = new KineticGame(comp1Server);
 
 function sendMessage(msg) { kinWatch.sendMessage(msg); }
-
 
 kinWatch.registerUpdater(() => {
     $("#status").html(kinWatch.getStatusHTML());
@@ -73,6 +67,36 @@ $("#bodies").click( e => {
         $("#status").show();
     }
 });
+
+function interp(f, low, high)
+{
+    return low + f*(high-low);
+}
+
+var markers = {};
+
+function setMark(name, sx, y, color)
+{
+    color = color || "black";
+    console.log("setMark "+name+" "+sx+" "+y);
+    markers[name] = {x: sx, y: y, color: color};
+    redraw();
+}
+
+function redraw()
+{
+    var c = document.getElementById("yawDrag");
+    var ctx = c.getContext("2d");
+    ctx.clearRect(0,0,1000,1000);
+    for (var name in markers) {
+        ctx.beginPath();
+        marker = markers[name];
+        ctx.strokeStyle = marker.color;
+        ctx.fillStyle = marker.color;
+        ctx.arc(marker.x, marker.y, 5, 0, 2 * Math.PI);
+        ctx.fill();
+    }
+}
 
 var isDragging = false;
 
@@ -92,19 +116,22 @@ $(yawId).mouseup(function() {
 $(yawId).mousemove(function(e) {
     if (!isDragging)
        return;
-    var ht = 100;
+    var ht = 150;
+    var wd = 720.0;
     var x = e.offsetX;
     var y = e.offsetY - ht/2;
-    console.log("dragging... x: "+x+"  y:"+y);
-    var yaw = x / 2;
-    var pitch = - (90/50.0)*y;
-    console.log("dragging... yaw: "+yaw+" pitch: "+pitch);
-    gameControl.setServo(x);
+    var fx = x/wd;
+    var servo = {min: 0, max: 180};
+    var sx = interp(fx, servo.min, servo.max);
+    console.log("dragging... fx: "+fx+"  y:"+y+"  sx: "+sx);
+    gameControl.setServo(sx);
+    setMark("mouse", sx, 30, "green");
+    redraw()
 });
 
 $(document).ready(function() {
-    document.title = "Kin Pano: "+sioURL;
-    $("#server").html("server: "+sioURL);
+    document.title = "Kin Pano: "+kinectURL;
+    $("#kinectServer").html(kinectURL);
 });
 </script>
 

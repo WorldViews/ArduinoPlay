@@ -1,14 +1,15 @@
 
-var KINETIC_GAME_URL = "platonia:3000";
+var COMP_URL = "platonia:3000";
 
 class KineticGame {
-    constructor(server) {
-        server = server || KINETIC_GAME_URL;
-        $("#gameServer").html(server);
-        this.sock = io(server);
+    constructor(compName, compServer) {
+        compServer = comp1Server || COMP_URL;
+        console.log("comp1 server:", compServer);
+        $("#comp1Server").html(comp1Server);
+        this.sock = io(comp1Server);
         this.sock.on('status', msg=> {
             console.log("status "+JSON.stringify(msg));
-            $("#gameStatus").html(JSON.stringify(msg));
+            $("#comp1Status").html(JSON.stringify(msg));
         });
     }
 
@@ -17,19 +18,26 @@ class KineticGame {
         this.sock.emit("servo.set", val);
     }
 
+    handleHand(body, jname) {
+        var pos = body.msg[jname];
+        console.log("pos: "+pos);
+        var x = pos[0];
+        var fx = x/1000;
+        var sx = 90 + 220*fx;
+        console.log("fx: "+fx+"  sx: "+sx);
+        this.setServo(sx);
+        setMark("kin", sx, 40, "blue");
+    }
+    
     handleKinUpdate(kinWatch) {
         for (var bodyId in kinWatch.bodies) {
             var body = kinWatch.bodies[bodyId];
             //console.log("body: "+body);
-            var up = body.RIGHT_UP.getState();
-            if (up) {
-                var pos = body.msg['RIGHT_HAND'];
-                console.log("pos: "+pos);
-                var x = pos[0];
-                var fx = x/1000;
-                var sx = 90 + 220*fx;
-                console.log("fx: "+fx+"  sx: "+sx);
-                this.setServo(sx);
+            if (body.RIGHT_UP.getState()) {
+                this.handleHand(body, "RIGHT_HAND");
+            }
+            if (body.LEFT_UP.getState()) {
+                this.handleHand(body, "LEFT_HAND");
             }
         }
     }
