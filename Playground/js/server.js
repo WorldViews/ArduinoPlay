@@ -8,6 +8,7 @@ console.log("argv:", argv);
 var Playground = require("playground-io");
 var five = require("johnny-five");
 var sock = null;
+var activeSockets = [];
 var pin = null;
 var light = null;
 var led = null;
@@ -78,13 +79,11 @@ function setupBoard() {
         accelerometer.on("change", (data) => {
             //console.log("acc data: "+JSON.stringify(data));
             console.log("acc data: "+data.x+" "+data.y+" "+data.z);
-            console.log("sock: "+sock);
-            if (sock) {
-                console.log("sending acc.change "+data.x+" "+data.y+" "+data.z);
-                var acc = {x: data.x, y: data.y, z: data.z};
-                //sock.emit("acc.change", data.x+" "+data.y+" "+data.z);
-                sock.emit("acc.change", acc);
-            }
+            //console.log("sock: "+sock);
+            console.log("sending acc.change "+data.x+" "+data.y+" "+data.z);
+            var acc = {x: data.x, y: data.y, z: data.z};
+            //sock.emit("acc.change", data.x+" "+data.y+" "+data.z);
+            sendMessage("acc.change", acc);
             //piezo.frequency(data.double ? 1500 : 500, 50);
         });
 
@@ -92,33 +91,15 @@ function setupBoard() {
             light.on("change", (data) => {
                 //console.log("light: "+JSON.stringify(data));
                 //console.log("lux:", data.lux);
-                if (sock) {
-                    sock.emit("light.change", data);
-                }
+                sendMessage("light.change", data);
             });
         }
         if (pin) {
             pin.on("data", (data) => {
                 //console.log("pin: "+data);
-                if (sock) {
-                    sock.emit("pin.change", data);
-                }
+                sendMessage("pin.change", data);
             });
         }
-        /*
-        io.on("connection", function(socket) {
-            sock = socket;
-            console.log("Got connection...");
-            socket.on("change:interval", function(data) {
-                console.log("data: "+data);
-                led.blink(data);
-            });
-            socket.on("servo.set", function(data) {
-                //console.log("servo value: "+data);
-                servo.to(data);
-            });
-        });
-        */
     });
 }
 
@@ -133,8 +114,25 @@ function heartbeat() {
         if (pin)
             msg.haveBoard = true;
         console.log("sending "+JSON.stringify(msg));
-        sock.emit("status", msg);
+        sendMessage("status", msg);
     }
+}
+
+function sendMessage(mtype, msg) {
+    //console.log("send "+mtype+" "+JSON.stringify(msg));
+    activeSockets.forEach(sock => {
+        sock.emit(mtype, msg);
+    });
+}
+
+function handleDisconnect(socket)
+{
+    console.log("handleDisconnect: ", socket);
+    var index = activeSockets.indexOf(socket);
+    if (index >= 0) {
+        activeSockets.splice(index, 1);
+    }
+    console.log("activeSockets "+activeSockets.length);
 }
 
 setupBoard();
@@ -143,6 +141,8 @@ var io = require("socket.io").listen(server);
 io.on("connection", function(socket) {
     sock = socket;
     console.log("Got connection...");
+    activeSockets.push(socket);
+    console.log("activeSOckets: " + activeSockets.length);
     socket.on("change:interval", function(data) {
         console.log("data: "+data);
         led.blink(data);
@@ -154,6 +154,7 @@ io.on("connection", function(socket) {
         else
             console.log("No servo");
     });
+    socket.on('disconnect', obj => handleDisconnect(socket, obj));
 });
 
 console.log("listening on "+addr+" port: "+port);
