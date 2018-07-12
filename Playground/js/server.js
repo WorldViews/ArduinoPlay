@@ -113,7 +113,7 @@ function heartbeat() {
         msg = {type: 'status', gen: tickCount, haveBoard: false};
         if (pin)
             msg.haveBoard = true;
-        console.log("sending "+JSON.stringify(msg));
+        //console.log("sending "+JSON.stringify(msg));
         sendMessage("status", msg);
     }
 }
