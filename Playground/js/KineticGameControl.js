@@ -3,10 +3,10 @@ var COMP_URL = "platonia:3000";
 
 class KineticComponent {
     constructor(compName, compServer) {
-        compServer = comp1Server || COMP_URL;
-        console.log("comp1 server:", compServer);
-        $("#comp1Server").html(comp1Server);
-        this.sock = io(comp1Server);
+        compServer = compServer || COMP_URL;
+        console.log("comp server:", compServer);
+        $("#comp1Server").html(compServer);
+        this.sock = io(compServer);
         this.sock.on('status', msg=> {
             console.log("status "+JSON.stringify(msg));
             $("#comp1Status").html(JSON.stringify(msg));
@@ -22,8 +22,13 @@ class KineticComponent {
 
 class KineticGame {
     constructor(comp1Name, comp1Server) {
-        this.comp1 = new KineticComponent(comp1Name, comp1Server);
-        this.comp2 = new KineticComponent(comp1Name, "platonia:3000");
+	console.log("******** setting up KinectiGame ******");
+        //this.comp1 = new KineticComponent(comp1Name, comp1Server);
+        //this.comp1 = new KineticComponent("comp1", "192.168.22.203:3000");
+	this.comp1 = new KineticComponent(comp1Name, "hw0974:3000");
+        //this.comp2 = new KineticComponent(comp1Name, "192.168.22.203:3000");
+	//this.comp2 = new KineticComponent("comp2", "localhost:3000");
+        this.comp2 = new KineticComponent("comp2", "192.168.22.203:3000");
     }
 
     handleHand(body, jname) {
