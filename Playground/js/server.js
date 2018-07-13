@@ -3,8 +3,11 @@ var argv = process.argv;
 var port = 3000;
 //var port = 8089;
 var addr = "0.0.0.0";
+var comPort = "com4";
 console.log("argv:", argv);
-
+if (argv.length > 2)
+    comPort = argv[2];
+console.log("Using com port: "+comPort);
 var Playground = require("playground-io");
 var five = require("johnny-five");
 var sock = null;
@@ -50,10 +53,10 @@ app.get("/*", function (req, res) {
 //////////////////////////////////////////////////////////////////
 // Board stuff
 
-function setupBoard() {
+function setupBoard(comPort) {
     board = new five.Board({
         io: new Playground({
-            port: "com4",
+            port: comPort,
 
             // Passing Firmata options through:
             // Circuit Playground Firmata seems not to report version before timeout,
@@ -135,7 +138,7 @@ function handleDisconnect(socket)
     console.log("activeSockets "+activeSockets.length);
 }
 
-setupBoard();
+setupBoard(comPort);
 //var io = require("socket.io")(server);
 var io = require("socket.io").listen(server);
 io.on("connection", function(socket) {
