@@ -61,6 +61,7 @@ class KineticGame {
             BODY = body;
             //this.handleJoint(body, "HEAD");
             this.handleJoint(body, "RIGHT_HAND");
+            break;
             /*
             //console.log("body: "+body);
             if (body.RIGHT_UP.getState()) {
