@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Kinetic Distributed Game</title>
+</head>
+<body>
+<br>
+Hello<br>
+Component1 Server:
+<!--<span id="comp1Server" style="font-size:11px"></span><br>
+-->
+<span id="comp1Server"></span><br>
+&nbsp;
+<span id="comp1Status"></span><br>
+<span id="errMsg" style="font-size:12px;color:red"></span><br>
+<p>
+Kinect Server: <span id="kinectServer"></span><br>
+<h4 id="bodies">Bodies: [hide]</h4>
+<div id="status"></div>
+<p>
+<hr align="left" width="200px">
+<div id="portalControl"></div>
+<p>
+<canvas id="stateCanvas" style="background-color:#F0F0FF;width:720px;height:360px;"></canvas>
+<div id="log"></div>
+<script src="./js/sprintf.js"></script>
+<script src="./js/math.js"></script>
+<script src="../js/jquery-3.1.1.min.js"></script>
+<script src="../js/socket.io-1.4.5.js"></script>
+<script src="./js/KinWatch.js"></script>
+<script src="./js/KineticGameControl2.js"></script>
+
+<script>
+
+  
+function getParameterByName(name) {
+    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
+var kinectURL = "http://platonia:4000";
+//var kinectURL = document.location.host;
+var kinectServerName = getParameterByName("kinectServer");
+if (kinectServerName) {
+    kinectURL = "http://"+kinectServerName+":4000";
+}
+var kinWatch = new KinWatch(kinectURL);
+var comp1Server = "hw0974:3000";
+if (getParameterByName("comp1Server"))
+    comp1Server = getParameterByName("comp1Server");
+var gameControl = new KineticGame(comp1Server);
+
+function sendMessage(msg) { kinWatch.sendMessage(msg); }
+
+kinWatch.registerUpdater(() => {
+    $("#status").html(kinWatch.getStatusHTML());
+    gameControl.handleKinUpdate(kinWatch);
+});
+
+$("#bodies").click( e => {
+    console.log("**click**");
+    if ($("#bodies").html().includes("hide")) {
+        $("#bodies").html("Bodies: [show]");
+        $("#status").hide();
+    }
+    else {
+        $("#bodies").html("Bodies: [hide]");
+        $("#status").show();
+    }
+});
+
+function interp(f, low, high)
+{
+    return low + f*(high-low);
+}
+
+var markers = {};
+
+function setMark(name, sx, y, color)
+{
+    color = color || "black";
+    console.log("setMark "+name+" "+sx+" "+y);
+    markers[name] = {x: sx, y: y, color: color};
+    redraw();
+}
+
+function redraw()
+{
+    var c = document.getElementById("stateCanvas");
+    var ctx = c.getContext("2d");
+    ctx.clearRect(0,0,1000,1000);
+    for (var name in markers) {
+        ctx.beginPath();
+        marker = markers[name];
+        ctx.strokeStyle = marker.color;
+        ctx.fillStyle = marker.color;
+        ctx.arc(marker.x, marker.y, 5, 0, 2 * Math.PI);
+        ctx.fill();
+    }
+}
+
+var isDragging = false;
+
+var yawId = "#stateCanvas";
+var downX = 0;
+var downY = 0;
+var E;
+$(yawId).mousedown(function(e) {
+    E = e;
+    downX = e.clientX;
+    downY = e.clientX;
+    isDragging = true;
+});
+$(yawId).mouseup(function() {
+    isDragging = false;
+});
+$(yawId).mousemove(function(e) {
+    if (!isDragging)
+       return;
+    var ht = 150;
+    var wd = 720.0;
+    var x = e.offsetX;
+    var y = e.offsetY - ht/2;
+    var fx = x/wd;
+    var servo = {min: 0, max: 180};
+    var sx = interp(fx, servo.min, servo.max);
+    console.log("dragging... fx: "+fx+"  y:"+y+"  sx: "+sx);
+    gameControl.setServo(sx);
+    setMark("mouse", sx, 30, "green");
+    redraw()
+});
+
+$(document).ready(function() {
+    document.title = "Magic: "+kinectURL;
+    $("#kinectServer").html(kinectURL);
+});
+</script>
+
+</body>
+</html>
