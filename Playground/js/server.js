@@ -155,7 +155,7 @@ io.on("connection", function(socket) {
         if (servo)
             servo.to(data);
         else
-            console.log("No servo");
+            console.log("No servo "+data);
     });
     socket.on('disconnect', obj => handleDisconnect(socket, obj));
 });
