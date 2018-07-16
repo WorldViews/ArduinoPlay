@@ -47,6 +47,7 @@ Component1 Server:
 <script src="../js/jquery-3.1.1.min.js"></script>
 <script src="../js/socket.io-1.4.5.js"></script>
 <script src="./js/KineticGameControl.js"></script>
+<script src="./js/Viewer.js"></script>
 
 <script>
   class MB {
@@ -139,62 +140,7 @@ function interp(f, low, high)
     return low + f*(high-low);
 }
 
-var markers = {};
-
-function setMark(name, sx, y, color)
-{
-    color = color || "black";
-    console.log("setMark "+name+" "+sx+" "+y);
-    markers[name] = {x: sx, y: y, color: color};
-    redraw();
-}
-
-function redraw()
-{
-    var c = document.getElementById("stateCanvas");
-    var ctx = c.getContext("2d");
-    ctx.clearRect(0,0,1000,1000);
-    for (var name in markers) {
-        ctx.beginPath();
-        marker = markers[name];
-        ctx.strokeStyle = marker.color;
-        ctx.fillStyle = marker.color;
-        ctx.arc(marker.x, marker.y, 5, 0, 2 * Math.PI);
-        ctx.fill();
-    }
-}
-
-var isDragging = false;
-
-var yawId = "#stateCanvas";
-var downX = 0;
-var downY = 0;
-var E;
-$(yawId).mousedown(function(e) {
-    E = e;
-    downX = e.clientX;
-    downY = e.clientX;
-    isDragging = true;
-});
-$(yawId).mouseup(function() {
-    isDragging = false;
-});
-$(yawId).mousemove(function(e) {
-    if (!isDragging)
-       return;
-    var ht = 150;
-    var wd = 720.0;
-    var x = e.offsetX;
-    var y = e.offsetY - ht/2;
-    var fx = x/wd;
-    var servo = {min: 0, max: 180};
-    var sx = interp(fx, servo.min, servo.max);
-    console.log("dragging... fx: "+fx+"  y:"+y+"  sx: "+sx);
-    gameComp.setServo(sx);
-    setMark("mouse", sx, 30, "green");
-    redraw()
-});
-
+var viewer = new StateView("stateCanvas");
 
 var statusDiv = document.getElementById("statusDiv");
 
