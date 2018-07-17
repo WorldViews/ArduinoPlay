@@ -150,7 +150,7 @@ function handleAcc(ax,ay,az)
    //var a2 = ax*ax + ay*ay + az*az;
    //$("#accDiv").html("mag acc: "+a2);
    //var sval = 10*a2;
-   var sval = 6*ax + 150;
+   var sval = 6*ax + 90;
    $("#accDiv").html("acc: "+ax+" "+sval);
    viewer.setMark("sval", sval, 20);
    gameComp.setServo(sval);
