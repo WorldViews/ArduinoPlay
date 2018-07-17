@@ -15,6 +15,7 @@ Component1 Server:
 <span id="errMsg" style="font-size:12px;color:red"></span><br>
 <p>
 <div id="status"></div>
+<div id="accDiv" style="font-size:40px">ACC</div>
 <p>
     <h2>Phone Motion</h2>
       <table style="font-size:48px;">
@@ -90,6 +91,8 @@ Component1 Server:
       info = info.replace("Z", round(acceleration.z));
       document.getElementById("moAccel").innerHTML = info;
 
+      handleAcc(acceleration.x,acceleration.y,acceleration.z);
+
       // Grab the acceleration including gravity from the results
       acceleration = eventData.accelerationIncludingGravity;
       info = xyz.replace("X", round(acceleration.x));
@@ -133,14 +136,26 @@ if (getParameterByName("comp1Server"))
 //var gameControl = new KineticGame(comp1Server);
 var gameComp = new KineticComponent("pend1", comp1Server);
 
-function sendMessage(msg) { kinWatch.sendMessage(msg); }
+var viewer = new StateView("stateCanvas");
+
+function sendMessage(msg) { }
 
 function interp(f, low, high)
 {
     return low + f*(high-low);
 }
 
-var viewer = new StateView("stateCanvas");
+function handleAcc(ax,ay,az)
+{
+   //var a2 = ax*ax + ay*ay + az*az;
+   //$("#accDiv").html("mag acc: "+a2);
+   //var sval = 10*a2;
+   var sval = 6*ax + 150;
+   $("#accDiv").html("acc: "+ax+" "+sval);
+   viewer.setMark("sval", sval, 20);
+   gameComp.setServo(sval);
+}
+  
 
 var statusDiv = document.getElementById("statusDiv");
 
