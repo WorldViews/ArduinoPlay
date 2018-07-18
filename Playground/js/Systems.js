@@ -1,6 +1,6 @@
 
 var speed = 5;
-var lowSpeed = 1;
+var lowSpeed = 0;
 var ASCII = {};
 ASCII.A = 65;
 ASCII.S = 83;
@@ -27,7 +27,8 @@ function initFun(opts)
     console.log("initFun", opts);
     
     var g = 5;
-    g = 0.02;
+    //g = 0.02;
+    g = 5;
     world = new p2.World({
         gravity : [0,-g]
     });
@@ -46,9 +47,9 @@ function initFun(opts)
     world.addBody(plane);
 
     this.frame(3,0,8,8);
-    //var sys = new System1(world, plane);
-    //var sys = new System2(world, plane);
-    var sys = new SpringSystem(world, plane);
+    sys = new System1(world, plane);
+    //sys = new System2(world, plane);
+    //sys = new SpringSystem(world, plane);
  }
 
 function setMotor(pin)
@@ -58,7 +59,7 @@ function setMotor(pin)
     motors.push(pin);
 }
 
-class System1 {
+class System0 {
     constructor(world, plane) {
         var h = 3.0;
         var x = x0;
@@ -71,6 +72,34 @@ class System1 {
             pend1.bodies[1], pend2.bodies[1],
             { stiffness: 0.00001, damping: 0.0001 });
         world.addSpring(this.spring1);
+    }
+}
+
+class System1 {
+    constructor(world, plane) {
+        var h = 3.0;
+        var x = x0;
+        var L0 = 0.5
+        var spacing = 3;
+        var k1 = 0.00001;
+        var k2 = 100.0;
+        var damping1 = 0.000001;
+        var damping2 = 10;
+        pend1 = new Pendulum(world, plane, x, h, MASS, [L0]);
+        x += spacing;
+        pend2 = new Pendulum(world, plane, x, h, MASS, [L0, 1.2]);
+        x += spacing;
+        pend3 = new Pendulum(world, plane, x, h, MASS, [L0]);
+        setMotor(pend1.pins[0]);
+        setMotor(pend3.pins[0]);
+        this.spring1 = new p2.LinearSpring(
+            pend1.bodies[0], pend2.bodies[0],
+            { stiffness: k2, damping: damping2 });
+        world.addSpring(this.spring1);
+        this.spring2 = new p2.LinearSpring(
+            pend2.bodies[0], pend3.bodies[0],
+            { stiffness: k2, damping: damping2 });
+        world.addSpring(this.spring2);
     }
 }
 
@@ -112,20 +141,25 @@ class SpringSystem {
         nblocks = nblocks || 20;
         mass = mass || 0.05;
         var L0 = 0.1;
-        var r = 0.1;
+        var r = 0.08;
         var h = 2.0;
         var h2 = 0;
         var x = x0;
-        var spacing = 0.5;
+        var spacing = 0.45;
         var k = 120;
         k = 10;
         var damping = 0.0;
         var Spring = p2.LinearSpring;
+        var havePend1 = false;
         //var Spring = p2.Spring;
-        pend1 = new Pendulum(world, plane, x, h+h2, MASS, [L0]);
-        x += spacing;
         this.blocks = [];
-        var prevBody = pend1.bodies[0];
+        var prevBody = null;
+        this.pend1 = null;
+        if (havePend1) {
+            this.pend1 = new Pendulum(world, plane, x, h+h2, MASS, [L0]);
+            x += spacing;
+            prevBody = this.pend1.bodies[0];
+        }
         for (var i=0; i<nblocks; i++) {
             var shape = new p2.Circle({ radius: r });
             var body = new p2.Body({
@@ -134,22 +168,67 @@ class SpringSystem {
             });
             body.addShape(shape);
             world.addBody(body);
-            var spring = new Spring(
-                prevBody, body,
-                { stiffness: k, damping: damping, length: 0 });
-            world.addSpring(spring);
             this.blocks.push(body);
+            if (prevBody) {
+                var spring = new Spring(
+                    prevBody, body,
+                    { stiffness: k, damping: damping, length: 0 });
+                world.addSpring(spring);
+            }
             x += spacing;
             prevBody = body;
         }
         pend2 = new Pendulum(world, plane, x, h+h2, MASS, [L0]);
         spring = new Spring(
             prevBody, pend2.bodies[0],
-            { stiffness: k, damping: damping, length: 0});
+            { stiffness: k, damping: damping, restLength: 0});
         world.addSpring(spring);
-        setMotor(pend1.pins[0]);
+        if (this.pend1)
+            setMotor(this.pend1.pins[0]);
+
+        this.cbody = this.blocks[0];
+        //this.cb = new ControlBox(world, {attachTo: this.blocks[0]});
+    }
+
+    set(x,y) {
+        this.cbody.position[0] = 0; this.cbody.position[1]=y;
+    }
+    moveControl(dx,dy) {
+        this.cbody.position[0] += dx;
+        this.cbody.position[1] += dy;
     }
 }
+
+class ControlBox {
+    constructor(world, opts) {
+        opts = opts || {};
+        var position = opts.position || [0,0];
+        if (opts.attachTo) {
+            position = [opts.attachTo.position[0]-.1, opts.attachTo.position[1]];
+        }
+        var r = opts.r || .05;
+        var shape = new p2.Circle({ radius: r });
+        this.body = new p2.Body({
+            mass: 0.01,
+            position
+        });
+        this.body.addShape(shape);
+        world.addBody(this.body);
+        if (opts.attachTo) {
+            this.spring = new p2.LinearSpring(
+                this.body, opts.attachTo,
+                { stiffness: 0.01}
+            );
+            world.addSpring(this.spring);
+        }
+    }
+
+    setPos(x,y) {
+        this.body.position[0] = x;
+        this.body.position[1] = y;
+    }
+}
+
 /*
 Add multiple pendulum with specificed lengths.
 */

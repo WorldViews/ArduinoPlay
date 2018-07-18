@@ -21,7 +21,7 @@ Kinect Server: <span id="kinectServer"></span><br>
 <hr align="left" width="200px">
 <div id="portalControl"></div>
 <p>
-<canvas id="yawDrag" style="background-color:#F0F0FF;width:720px;height:360px;"></canvas>
+<canvas id="stateCanvas" style="background-color:#F0F0FF;width:720px;height:360px;"></canvas>
 <div id="log"></div>
 <script src="./js/sprintf.js"></script>
 <script src="./js/math.js"></script>
@@ -46,9 +46,11 @@ if (kinectServerName) {
 }
 var kinWatch = new KinWatch(kinectURL);
 var comp1Server = "hw0974:3000";
+comp1Server = "francu:3000";
+comp1Server = "platonia:3000";
 if (getParameterByName("comp1Server"))
     comp1Server = getParameterByName("comp1Server");
-var gameControl = new KineticGame(comp1Server);
+var gameControl = new KineticGameAboveHead(comp1Server);
 
 function sendMessage(msg) { kinWatch.sendMessage(msg); }
 
@@ -86,7 +88,7 @@ function setMark(name, sx, y, color)
 
 function redraw()
 {
-    var c = document.getElementById("yawDrag");
+    var c = document.getElementById("stateCanvas");
     var ctx = c.getContext("2d");
     ctx.clearRect(0,0,1000,1000);
     for (var name in markers) {
@@ -101,7 +103,7 @@ function redraw()
 
 var isDragging = false;
 
-var yawId = "#yawDrag";
+var yawId = "#stateCanvas";
 var downX = 0;
 var downY = 0;
 var E;
@@ -131,7 +133,7 @@ $(yawId).mousemove(function(e) {
 });
 
 $(document).ready(function() {
-    document.title = "Kin Pano: "+kinectURL;
+    document.title = "Magic: "+kinectURL;
     $("#kinectServer").html(kinectURL);
 });
 </script>
