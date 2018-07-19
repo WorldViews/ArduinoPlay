@@ -3,6 +3,7 @@ var COMP_URL = "platonia:3000";
 
 var BODY = null;
 
+/*
 // This gets a proxy object for a ArduinoPlayground object being served
 // by a nodejs server.  It can be used to set the servo position for that
 // device.
@@ -24,6 +25,7 @@ class KineticComponent {
     }
 
 }
+*/
 
 class KineticGame {
 }
