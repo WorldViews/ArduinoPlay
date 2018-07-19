@@ -1,12 +1,14 @@
 
 var argv = process.argv;
-var port = 3000;
+var port = "3000";
 //var port = 8089;
 var addr = "0.0.0.0";
 var comPort = "com4";
 console.log("argv:", argv);
 if (argv.length > 2)
     comPort = argv[2];
+if (argv.length > 3)
+    port = argv[3];
 console.log("Using com port: "+comPort);
 var Playground = require("playground-io");
 var five = require("johnny-five");
