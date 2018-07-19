@@ -17,6 +17,12 @@ var plane;
 var sys;
 var BODY;
 
+
+function getParameterByName(name) {
+    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
 function toRadians(d)
 {
     return Math.PI * d / 180.0;
@@ -57,7 +63,11 @@ function initFun(opts)
     world.addBody(plane);
 
     this.frame(3,0,8,8);
-    sys = new System1(world, plane);
+    var klass = ThreePendulums;
+    var className = getParameterByName("className");
+    if (className)
+        klass = eval(className);
+    sys = new klass(world, plane);
     //sys = new System2(world, plane);
     //sys = new SpringSystem(world, plane);
  }
@@ -85,7 +95,7 @@ class System0 {
     }
 }
 
-class System1 {
+class ThreePendulums {
     constructor(world, plane) {
         var h = 3.0;
         var x = x0;

@@ -37,20 +37,10 @@ div.absolute {
 </head>
 <body>
   <div class="absolute">
-<!--
-    <input id="goCW"  type="button" value="L">
-    <input id="goCCW" type="button" value="R"><br>
--->
 L <input id="speed" type="range" min="-100" max="100" value="0" style="width:920px"> R
 </div>
 <div id="status"></div>
     <script>
-
-         
-function getParameterByName(name) {
-    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
-    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
-}
 
       setup();
       $("#speed").on("input", () => {
