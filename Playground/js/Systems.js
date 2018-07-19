@@ -15,6 +15,16 @@ var pend1, pend2, pend3, pend4;
 var world;
 var plane;
 var sys;
+var BODY;
+
+function toRadians(d)
+{
+    return Math.PI * d / 180.0;
+}
+function toDegrees(r)
+{
+    return 180*r/Math.PI;
+}
 
 function setup() {
     var opts = {foo: 25, hideGUI: true};
@@ -100,6 +110,15 @@ class System1 {
             pend2.bodies[0], pend3.bodies[0],
             { stiffness: k2, damping: damping2 });
         world.addSpring(this.spring2);
+        this.pins = {};
+        this.pins['pin1'] = pend1.pins[0];
+        this.pins['pin2'] = pend2.pins[0];
+        this.pins['pin3'] = pend3.pins[0];
+    }
+
+    setAngle(name, a) {
+        var pin = this.pins[name];
+        pin.setLimits(a,a);
     }
 }
 
@@ -280,6 +299,60 @@ function setMotorSpeeds(speed, mots)
     mots.forEach(motor => {
         motor.setMotorSpeed(speed);
     });
+}
+
+var kinWatch;
+
+class KinectController {
+    constructor(kinectURL) {
+        var kinectURL = "http://platonia:4000";
+        //var kinectURL = document.location.host;
+        var kinectServerName = getParameterByName("kinectServer");
+        if (kinectServerName) {
+            kinectURL = "http://"+kinectServerName+":4000";
+        }
+        this.kinWatch = new KinWatch(kinectURL);
+        kinWatch = this.kinWatch;
+        var inst = this;
+        this.kinWatch.registerUpdater(() => inst.handleKinUpdate());
+        var comp1Server = "francu:3000";
+        this.comp1 = new KineticComponent("pend", comp1Server);
+    }
+
+    sendMessage(msg) { kinWatch.sendMessage(msg); }
+
+    setPinFromJoint(body, jname, pinName) {
+        var hpos = body.msg['HEAD'];
+        var a0 = -Math.PI/2;
+        var pos = body.msg[jname];
+        var dx = pos[0] - hpos[0];
+        var a = dx/1000;
+        a *= 2;
+        a = a % Math.PI;
+        a = a0 + a;
+       // console.log("a: "+a);
+       sys.setAngle(pinName, a);
+    }
+
+    handleKinUpdate() {
+        var kinWatch = this.kinWatch;
+        $("#status").html(kinWatch.getStatusHTML());
+        //gameControl.handleKinUpdate(kinWatch);
+        var bodies = Object.values(kinWatch.bodies);
+        if (bodies.length < 1)
+            return;
+        this.setPinFromJoint(bodies[0], "RIGHT_HAND", "pin3");
+        if (bodies.length == 1)
+            this.setPinFromJoint(bodies[0], "LEFT_HAND", "pin1");
+        else
+            this.setPinFromJoint(bodies[1], "LEFT_HAND", "pin1");
+        var pin = sys.pins["pin2"];
+        var a = (toDegrees(pin.angle) + 180) % 360;
+        //if (a < 0)
+        //    a += 360;
+        this.comp1.setServo(a);
+        console.log("pin a: "+a);
+    }
 }
 
 function setupKeys() {
