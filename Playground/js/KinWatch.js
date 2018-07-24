@@ -197,6 +197,7 @@ KinWatch.prototype.getSelectedBody = function() { return this.selectedBody; }
 
 KinWatch.prototype.getStatusHTML = function()
 {
+    var kinWatch = this;
     var html = "";
     html += "<pre>";
     for (var bodyId in kinWatch.bodies) {

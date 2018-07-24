@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Kinetic Distributed Game</title>
+</head>
+<body>
+<br>
+Phone Game<br>
+Component1 Server:
+<!--<span id="comp1Server" style="font-size:11px"></span><br>
+-->
+<span id="comp1Server"></span><br>
+&nbsp;
+<span id="comp1Status"></span><br>
+<span id="errMsg" style="font-size:12px;color:red"></span><br>
+<p>
+<div id="status"></div>
+<div id="accDiv" style="font-size:40px">ACC</div>
+<p>
+    <h2>Phone Motion</h2>
+      <table style="font-size:48px;">
+      <tr>
+          <td>Event Supported</td><td id="dmEvent"></td>
+        </tr>
+      <tr>
+        <td>acc</td><td id="moAccel"></td>
+      </tr>
+      <tr>
+        <td>acc + grav</td><td id="moAccelGrav"></td>
+      </tr>
+      <tr>
+        <td>rotationRate</td><td id="moRotation"></td>
+      </tr>
+      <tr>
+        <td>interval</td><td id="moInterval"></td>
+      </tr>
+      <tr>
+        <td>orientation</td><td id="orientation"></td>
+      </tr>
+    </table>
+<p>
+<hr align="left" width="200px">
+<p>
+<canvas id="stateCanvas" style="background-color:#F0F0FF;width:720px;height:360px;"></canvas>
+<div id="log"></div>
+<script src="./js/sprintf.js"></script>
+<script src="./js/math.js"></script>
+<script src="../js/jquery-3.1.1.min.js"></script>
+<script src="../js/socket.io-1.4.5.js"></script>
+<script src="./js/KineticComponent.js"></script>
+<script src="./js/Viewer.js"></script>
+
+<script>
+  class MB {
+    constructor(arg) {}
+    sendMessage(msg) {}
+  }
+
+  WS = new MB();
+
+    function init() {
+      if ((window.DeviceMotionEvent) || ('listenForDeviceMovement' in window)) {
+        window.addEventListener('devicemotion', deviceMotionHandler, false);
+        window.addEventListener('deviceorientation', deviceOrientationHander, false);
+      } else {
+        statusDiv.innerHTML = "Not supported on your device or browser.  Sorry."
+      }
+    }
+
+    function deviceOrientationHander(event) {
+       var alpha = event.alpha;
+       var beta = event.beta;
+       var gamma = event.gamma;
+       var info = "" + round(alpha)+" "+round(beta)+" "+round(gamma);   
+       document.getElementById("orientation").innerHTML = info;
+       var msg = {
+          'msgType': 'orientation',
+          'yaw': alpha,
+          'pitch': beta,
+          'roll': gamma}
+       WS.sendMessage(msg);
+    }
+
+    function deviceMotionHandler(eventData) {
+      var info, xyz = "[X, Y, Z]";
+
+      // Grab the acceleration including gravity from the results
+      var acceleration = eventData.acceleration;
+      info = xyz.replace("X", round(acceleration.x));
+      info = info.replace("Y", round(acceleration.y));
+      info = info.replace("Z", round(acceleration.z));
+      document.getElementById("moAccel").innerHTML = info;
+
+      handleAcc(acceleration.x,acceleration.y,acceleration.z);
+
+      // Grab the acceleration including gravity from the results
+      acceleration = eventData.accelerationIncludingGravity;
+      info = xyz.replace("X", round(acceleration.x));
+      info = info.replace("Y", round(acceleration.y));
+      info = info.replace("Z", round(acceleration.z));
+      document.getElementById("moAccelGrav").innerHTML = info;
+
+      // Grab the acceleration including gravity from the results
+      var rotation = eventData.rotationRate;
+      info = xyz.replace("X", round(rotation.alpha));
+      info = info.replace("Y", round(rotation.beta));
+      info = info.replace("Z", round(rotation.gamma));
+      document.getElementById("moRotation").innerHTML = info;
+
+      info = eventData.interval;
+      document.getElementById("moInterval").innerHTML = info;
+      var msg = {
+          'msgType': 'motion',
+          'rotationRate': [rotation.alpha, rotation.beta, rotation.gamma],
+          'acceleration': [acceleration.x, acceleration.y, acceleration.z],
+       };
+       WS.sendMessage(msg);
+    }
+
+    function round(val) {
+      var amt = 10;
+      return Math.round(val * amt) /  amt;
+    }
+
+  
+function getParameterByName(name) {
+    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
+//var comp1Server = "hw0974:3000";
+//var comp1Server = "localhost:3000";
+var comp1Server = "platonia:3000";
+if (getParameterByName("comp1Server"))
+    comp1Server = getParameterByName("comp1Server");
+//var gameControl = new KineticGame(comp1Server);
+var gameComp = new KineticComponent("pend1", comp1Server);
+
+var viewer = new StateView("stateCanvas");
+
+function sendMessage(msg) { }
+
+function interp(f, low, high)
+{
+    return low + f*(high-low);
+}
+
+function handleAcc(ax,ay,az)
+{
+   //var a2 = ax*ax + ay*ay + az*az;
+   //$("#accDiv").html("mag acc: "+a2);
+   //var sval = 10*a2;
+   var sval = 6*ax + 90;
+   $("#accDiv").html("acc: "+ax+" "+sval);
+   viewer.setMark("sval", sval, 20);
+   gameComp.setServo(sval);
+}
+  
+
+var statusDiv = document.getElementById("statusDiv");
+
+$(document).ready(function() {
+    document.title = "Magic: "+comp1Server;
+    $("#pendServer").html(comp1Server);
+    init();    
+});
+</script>
+
+</body>
+</html>

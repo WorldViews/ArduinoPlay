@@ -28,7 +28,8 @@ Kinect Server: <span id="kinectServer"></span><br>
 <script src="../js/jquery-3.1.1.min.js"></script>
 <script src="../js/socket.io-1.4.5.js"></script>
 <script src="./js/KinWatch.js"></script>
-<script src="./js/KineticGameControl2.js"></script>
+<script src="./js/KineticComponent.js"></script>
+<script src="./js/KineticGameControl.js"></script>
 
 <script>
 
@@ -48,7 +49,7 @@ var kinWatch = new KinWatch(kinectURL);
 var comp1Server = "hw0974:3000";
 if (getParameterByName("comp1Server"))
     comp1Server = getParameterByName("comp1Server");
-var gameControl = new KineticGame(comp1Server);
+var gameControl = new KineticGameHandAnywhere("comp1", comp1Server);
 
 function sendMessage(msg) { kinWatch.sendMessage(msg); }
 
