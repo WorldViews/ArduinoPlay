@@ -6,12 +6,14 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
   <script src="js/ballTeleport.js"></script>
   <script>
+    var teleporter = null;
     var server = document.location.origin;
     console.log("server: "+server);
     $(function() {
       $("#server").html(server);
       //var socket = io.connect("http://localhost:3000");
       var socket = io.connect(server);
+      teleporter = new Teleporter(socket);
       initTeleporter(socket);
       var display = $("h1 span");
       $("#slider").on("input",function() {
