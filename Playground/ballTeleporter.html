@@ -14,7 +14,7 @@
       //var socket = io.connect("http://localhost:3000");
       var socket = io.connect(server);
       teleporter = new Teleporter(socket);
-      initTeleporter(socket);
+      //initTeleporter(socket);
       var display = $("h1 span");
       $("#slider").on("input",function() {
         var val = $(this).val();
@@ -43,7 +43,7 @@
       socket.on("pin.change", data => {
         //console.log("light.change"+JSON.stringify(data));
         $("#pin9").html(JSON.stringify(data));
-        observeSensor(data);
+        teleporter.observeSensor(data);
       });
       socket.on("status", data => {
         console.log("status"+JSON.stringify(data));
