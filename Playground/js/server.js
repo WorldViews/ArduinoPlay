@@ -3,13 +3,18 @@ var argv = process.argv;
 var port = "3000";
 //var port = 8089;
 var addr = "0.0.0.0";
-var comPort = "com4";
+var SerialPort = require("serialport");
+var comPortPath = "com4";
+var comPort = null;
+
 console.log("argv:", argv);
 if (argv.length > 2)
-    comPort = argv[2];
+    comPortPath = argv[2];
 if (argv.length > 3)
     port = argv[3];
-console.log("Using com port: "+comPort);
+
+
+console.log("Using com port: "+comPortPath);
 var Playground = require("playground-io");
 var five = require("johnny-five");
 var sock = null;
@@ -55,7 +60,27 @@ app.get("/*", function (req, res) {
 //////////////////////////////////////////////////////////////////
 // Board stuff
 
-function setupBoard(comPort) {
+var setupInProgress = false;
+
+function setupBoard(comPortPath) {
+    setupInProgress = true;
+    //var comPort = "com4";
+    console.log("Getting SerialPort for "+comPortPath);
+    comPort = new SerialPort(comPortPath,
+                             (err) => {
+                                 console.log("got callback: "+err);
+                                 setupInProgress = false;
+                             },
+                             (err) => {
+                                 console.log("got error callback: "+err);
+                                 setupInProgress = false;
+                             });
+
+    if (!setupInProgress) {
+        console.log("Failed to get board...");
+        return;
+    }
+    console.log("getting five.Board");
     board = new five.Board({
         io: new Playground({
             port: comPort,
@@ -68,17 +93,27 @@ function setupBoard(comPort) {
     });
 
     board.on("ready", function() {
-        console.log("**** board ready ****");
-        led = new five.Led(13);
-        servo = new five.Servo(12);
-    //    pin = new five.Pin({pin: 10, mode: five.Pin.INPUT});
-        pin = new five.Pin("A9");
-        light = new five.Light("A5");
+        console.log("**** board ready - ****");
+        setupInProgress = false;
+        if (!comPort.isOpen) {
+            console.log("aborting board initialization - com port not open");
+            return;
+        }
+        console.log("Getting led pin 13 for this board");
+        led = new five.Led({pin: 13, board: board});
+        console.log("Getting servo for this board");
+        servo = new five.Servo({pin: 12, board: board});
+        //pin = new five.Pin({pin: 10, mode: five.Pin.INPUT});
+        //pin = new five.Pin("A9");
+        pin = new five.Pin({pin: "A9", board: board});
+        //light = new five.Light("A5");
+        light = new five.Light({pin: 5, type: "analog", board: board});
         led.blink(1000);
-        console.log("Pin:", pin);
+        //console.log("Pin:", pin);
     
         var accelerometer = new five.Accelerometer({
-         controller: Playground.Accelerometer
+            controller: Playground.Accelerometer,
+            board: board
         });
 
         accelerometer.on("change", (data) => {
@@ -100,11 +135,20 @@ function setupBoard(comPort) {
             });
         }
         if (pin) {
+            var pin_ = pin;
             pin.on("data", (data) => {
-                //console.log("pin: "+data);
+                //console.log("isOpen: "+comPort.isOpen);
+                if (pin_ != pin) {
+                    //console.log("ignore old pin...");
+                    return;
+                }
                 sendMessage("pin.change", data);
             });
         }
+    });
+    
+    board.on("exit", () => {
+        console.log("Board exit...");
     });
 }
 
@@ -113,13 +157,21 @@ var tickCount = 0;
 
 function heartbeat() {
     tickCount++;
-    console.log("tick... "+tickCount);
+    var status = (comPort && comPort.isOpen) ? "open" : "closed";
+    console.log("tick... "+tickCount+" "+comPortPath+" "+status);
     if (sock) {
         msg = {type: 'status', gen: tickCount, haveBoard: false};
-        if (pin)
+        if (pin && comPort && comPort.isOpen)
             msg.haveBoard = true;
         //console.log("sending "+JSON.stringify(msg));
         sendMessage("status", msg);
+    }
+    if (!(comPort && comPort.isOpen)) {
+        if (setupInProgress)
+            console.log("*** retrying ***");
+        else {
+            setupBoard(comPortPath);
+        }
     }
 }
 
@@ -140,7 +192,8 @@ function handleDisconnect(socket)
     console.log("activeSockets "+activeSockets.length);
 }
 
-setupBoard(comPort);
+setupBoard(comPortPath);
+
 //var io = require("socket.io")(server);
 var io = require("socket.io").listen(server);
 io.on("connection", function(socket) {
