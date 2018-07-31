@@ -130,7 +130,8 @@ function getParameterByName(name) {
 
 //var comp1Server = "hw0974:3000";
 //var comp1Server = "localhost:3000";
-var comp1Server = "platonia:3000";
+//var comp1Server = "platonia:3000";
+var comp1Server = document.location.host;
 if (getParameterByName("comp1Server"))
     comp1Server = getParameterByName("comp1Server");
 //var gameControl = new KineticGame(comp1Server);
