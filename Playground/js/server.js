@@ -103,10 +103,7 @@ function setupBoard(comPortPath) {
         led = new five.Led({pin: 13, board: board});
         console.log("Getting servo for this board");
         servo = new five.Servo({pin: 12, board: board});
-        //pin = new five.Pin({pin: 10, mode: five.Pin.INPUT});
-        //pin = new five.Pin("A9");
         pin = new five.Pin({pin: "A9", board: board});
-        //light = new five.Light("A5");
         light = new five.Light({pin: 5, type: "analog", board: board});
         led.blink(1000);
         //console.log("Pin:", pin);
@@ -134,7 +131,11 @@ function setupBoard(comPortPath) {
                 sendMessage("light.change", data);
             });
         }
+
         if (pin) {
+            // this hack is because a pin on and old Board is not
+            // cleaned up when the com for that board dies.  The
+            // old "data" event function keeps getting called.
             var pin_ = pin;
             pin.on("data", (data) => {
                 //console.log("isOpen: "+comPort.isOpen);
@@ -150,6 +151,10 @@ function setupBoard(comPortPath) {
     board.on("exit", () => {
         console.log("Board exit...");
     });
+
+    board.on("fail", () => {
+        console.log("Board failed...");
+    });
 }
 
 
@@ -160,7 +165,8 @@ function heartbeat() {
     var status = (comPort && comPort.isOpen) ? "open" : "closed";
     console.log("tick... "+tickCount+" "+comPortPath+" "+status);
     if (sock) {
-        msg = {type: 'status', gen: tickCount, haveBoard: false};
+        msg = {type: 'status', portPath: comPortPath,
+               gen: tickCount, haveBoard: false};
         if (pin && comPort && comPort.isOpen)
             msg.haveBoard = true;
         //console.log("sending "+JSON.stringify(msg));
