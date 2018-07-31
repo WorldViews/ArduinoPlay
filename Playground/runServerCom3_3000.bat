@@ -1,2 +1,3 @@
-node js\server.js com5 3000
+node js\server.js com3
 set /P val="Any key to exit"
+
