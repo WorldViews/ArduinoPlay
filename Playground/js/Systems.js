@@ -325,9 +325,9 @@ class KinectController {
         kinWatch = this.kinWatch;
         var inst = this;
         this.kinWatch.registerUpdater(() => inst.handleKinUpdate());
-        var comp1Server = "francu:3000";
-        this.comp1 = new KineticComponent("pend", comp1Server);
-        this.comp2 = new KineticComponent("rightPin", "francu:3001");
+        this.comp1 = new KineticComponent("pend", "sasaki:3000");
+        this.comp2 = new KineticComponent("rightPin", "sasaki:3001");
+        this.comp3 = new KineticComponent("leftPin", "sasaki:3002");
     }
 
     sendMessage(msg) { kinWatch.sendMessage(msg); }
@@ -367,6 +367,11 @@ class KinectController {
         var a = (toDegrees(pin.angle) + 180) % 360;
         this.comp2.setServo(a);
         console.log("pin2 a: "+a);
+
+        var pin = sys.pins["pin3"];
+        var a = (toDegrees(pin.angle) + 180) % 360;
+        this.comp3.setServo(a);
+        console.log("pin3 a: "+a);
     }
 }
 
