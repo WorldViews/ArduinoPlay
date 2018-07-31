@@ -1,5 +1,6 @@
 
 var speed = 5;
+var GAIN = -1;
 var lowSpeed = 0;
 var ASCII = {};
 ASCII.A = 65;
@@ -337,7 +338,7 @@ class KinectController {
         var a0 = -Math.PI/2;
         var pos = body.msg[jname];
         var dx = pos[0] - hpos[0];
-        var a = dx/1000;
+        var a = GAIN*dx/1000;
         a *= 2;
         a = a % Math.PI;
         a = a0 + a;
