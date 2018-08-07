@@ -4,9 +4,10 @@ var port = "3000";
 //var port = 8089;
 var addr = "0.0.0.0";
 var SerialPort = require("serialport");
-var comPortPath = "com4";
+var comPortPath = "com3";
 var comPort = null;
 
+console.log("***** Running server2.js ****");
 console.log("argv:", argv);
 if (argv.length > 2)
     comPortPath = argv[2];
@@ -19,12 +20,18 @@ var Playground = require("playground-io");
 var five = require("johnny-five");
 var sock = null;
 var activeSockets = [];
-var pin = null;
 var light = null;
 var led = null;
 var servo = null;
 //var board = new five.Board();
 var board = null;
+var pins = {
+    2: null,
+    3: null,
+    6: null,
+    10: null,
+    "A9": null,
+};
 
 var http = require("http");
 var express = require("express");
@@ -61,6 +68,54 @@ app.get("/*", function (req, res) {
 // Board stuff
 
 var setupInProgress = false;
+
+
+function setupPin(pin, pinName) {
+    pin.on("data", (data) => {
+        //console.log("pin "+pinName+" "+data);
+        if (pin != pins[pinName]) {
+            //console.log("ignore old pin...");
+            return;
+        }
+        sendMessage("pin.change", data);
+        sendMessage("pin.data", {pin: pinName, data: data});
+    });
+    pin.on("high", (data) => {
+        //console.log("pin "+pinName+" "+data);
+        if (pin != pins[pinName]) {
+            //console.log("ignore old pin...");
+            return;
+        }
+        sendMessage("pin.data", {pin: pinName, data: "high"});
+    });
+    pin.on("low", (data) => {
+        //console.log("pin "+pinName+" "+data);
+        if (pin != pins[pinName]) {
+            //console.log("ignore old pin...");
+            return;
+        }
+        sendMessage("pin.data", {pin: pinName, data: "low"});
+    });
+}
+
+function setPin(pinName, value)
+{
+    console.log("set pin "+pinName+" "+value);
+    var pin = pins[pinName];
+    if (!pin) {
+        console.log("No such pin as "+pinName);
+        return;
+    }
+    if (value == "low")
+        pin.low();
+    else if (value == "high")
+        pin.high();
+    else
+        five.Pin.write(pin, value);
+//    five.Pin.read(pin, val => {
+//        console.log("pin "+pinName+" has value "+val);
+//    });
+}
 
 function setupBoard(comPortPath) {
     setupInProgress = true;
@@ -103,7 +158,22 @@ function setupBoard(comPortPath) {
         led = new five.Led({pin: 13, board: board});
         console.log("Getting servo for this board");
         servo = new five.Servo({pin: 12, board: board});
-        pin = new five.Pin({pin: "A9", board: board});
+        for (var pinName in pins) {
+            console.log("Creating pin "+pinName);
+            var pin = new five.Pin({pin: pinName, board: board});
+            pins[pinName] = pin;
+            setupPin(pin, pinName);
+            /*
+            pin.on("data", (data) => {
+                console.log("pin "+pinName+" "+data);
+                if (pin != pins[pinName]) {
+                    console.log("ignore old pin...");
+                    return;
+                }
+                sendMessage("pin.change", data);
+            });
+            */
+        }
         light = new five.Light({pin: 5, type: "analog", board: board});
         led.blink(1000);
         //console.log("Pin:", pin);
@@ -115,9 +185,8 @@ function setupBoard(comPortPath) {
 
         accelerometer.on("change", (data) => {
             //console.log("acc data: "+JSON.stringify(data));
-            console.log("acc data: "+data.x+" "+data.y+" "+data.z);
-            //console.log("sock: "+sock);
-            console.log("sending acc.change "+data.x+" "+data.y+" "+data.z);
+            //console.log("acc data: "+data.x+" "+data.y+" "+data.z);
+            //console.log("sending acc.change "+data.x+" "+data.y+" "+data.z);
             var acc = {x: data.x, y: data.y, z: data.z};
             //sock.emit("acc.change", data.x+" "+data.y+" "+data.z);
             sendMessage("acc.change", acc);
@@ -132,29 +201,14 @@ function setupBoard(comPortPath) {
             });
         }
 
-        if (pin) {
-            // this hack is because a pin on and old Board is not
-            // cleaned up when the com for that board dies.  The
-            // old "data" event function keeps getting called.
-            var pin_ = pin;
-            pin.on("data", (data) => {
-                //console.log("isOpen: "+comPort.isOpen);
-                if (pin_ != pin) {
-                    //console.log("ignore old pin...");
-                    return;
-                }
-                sendMessage("pin.change", data);
-            });
-        }
-    });
-    
-    board.on("exit", () => {
-        console.log("Board exit...");
-    });
+        board.on("exit", () => {
+            console.log("Board exit...");
+        });
 
-    board.on("fail", () => {
-        console.log("Board failed...");
-    });
+        board.on("fail", () => {
+            console.log("Board failed...");
+        });
+    })
 }
 
 
@@ -167,6 +221,7 @@ function heartbeat() {
     if (sock) {
         msg = {type: 'status', portPath: comPortPath,
                gen: tickCount, haveBoard: false};
+        var pin = pins["A9"];
         if (pin && comPort && comPort.isOpen)
             msg.haveBoard = true;
         //console.log("sending "+JSON.stringify(msg));
@@ -176,6 +231,9 @@ function heartbeat() {
         if (setupInProgress)
             console.log("*** retrying ***");
         else {
+            if (board != null) {
+                console.log("****** shutting down board ******");
+            }
             setupBoard(comPortPath);
         }
     }
@@ -198,6 +256,17 @@ function handleDisconnect(socket)
     console.log("activeSockets "+activeSockets.length);
 }
 
+function setPins(msg)
+{
+    console.log("setPins: ",msg);
+    var ops = msg;
+    ops.forEach(op => {
+        var pinName = op.pin;
+        var value = op.value;
+        setPin(pinName, value);
+    });
+}
+
 setupBoard(comPortPath);
 
 //var io = require("socket.io")(server);
@@ -217,6 +286,9 @@ io.on("connection", function(socket) {
             servo.to(data);
         else
             console.log("No servo "+data);
+    });
+    socket.on("pins.set", function(msg) {
+        setPins(msg);
     });
     socket.on('disconnect', obj => handleDisconnect(socket, obj));
 });
