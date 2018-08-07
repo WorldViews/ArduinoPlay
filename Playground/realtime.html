@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html>
 <head>
@@ -28,6 +27,50 @@
         console.log("sending servo:value "+val);
         socket.emit("servo.set", val);
       });
+      $("#btest1").click(() => {
+          console.log("Button Test 1");
+          var msg = [{pin: 6, value: 25},
+                     {pin: 10, value: 30}];
+          socket.emit("pins.set", msg);
+      });
+      $("#btest2").click(() => {
+          console.log("Button Test 2");
+          var msg = [{pin: 2, value: 'low'},
+                     {pin: 3, value: 'low'},
+                     {pin: 6, value: 'low'},
+                     {pin: 10, value: 'low'},
+                     {pin: 15, value: 'low'},
+                     {pin: 12, value: 'low'}];
+          socket.emit("pins.set", msg);
+      });
+      $("#btest3").click(() => {
+          console.log("Button Test 3");
+          var msg = [{pin: 2, value: 'high'},
+                     {pin: 3, value: 'high'},
+                     {pin: 6, value: 'high'},
+                     {pin: 10, value: 'high'},
+                     {pin: 12, value: 'high'}];
+          socket.emit("pins.set", msg);
+      });
+      $("#tstop").click(() => {
+          console.log("Train Stop");
+          var msg = [{pin: 2, value: 'low'}];
+          socket.emit("pins.set", msg);
+      });
+      $("#tforward").click(() => {
+          console.log("Train Forward");
+          var msg = [{pin: 2, value: 'high'},
+                     {pin: 3, value: 'high'},
+                     {pin: 6, value: 'low'}];
+          socket.emit("pins.set", msg);
+      });
+      $("#treverse").click(() => {
+          console.log("Train Reverse");
+          var msg = [{pin: 2, value: 'high'},
+                     {pin: 3, value: 'low'},
+                     {pin: 6, value: 'high'}];
+          socket.emit("pins.set", msg);
+      });
       socket.on("light.change", data => {
         //console.log("light.change"+JSON.stringify(data));
         $("#light_lux").html(data.lux);
@@ -37,8 +80,12 @@
         $("#acc").html(JSON.stringify(data));
       });
       socket.on("pin.change", data => {
-        //console.log("light.change"+JSON.stringify(data));
         $("#pin9").html(JSON.stringify(data));
+      });
+      socket.on("pin.data", msg => {
+         console.log("pin.data"+JSON.stringify(msg));
+         var jqid = "#pin"+msg.pin;
+         $(jqid).html(msg.data);
       });
       socket.on("status", data => {
         console.log("status"+JSON.stringify(data));
@@ -58,10 +105,21 @@
             180
   <p>
     Light: <span id="light_lux"></span><br>
+    Pin2: <span id="pin2"></span><br>
+    Pin3: <span id="pin3"></span><br>
+    Pin6: <span id="pin6"></span><br>
     Pin9: <span id="pin9"></span><br>
+    Pin10: <span id="pin10"></span><br>
+    Pin12: <span id="pin12"></span><br>
     Accel: <span id="acc"></span><br>
     Status: <span id="status"></span><br>
     Server: <span id="server"></span><br>
   </p>
+  <input id="btest1"    type="Button" value="Test 1"><br>
+  <input id="btest2"    type="Button" value="Test 2"><br>
+  <input id="btest3"    type="Button" value="Test 3"><br>
+  <input id="tstop"     type="Button" value="Train Stop"><br>
+  <input id="tforward"  type="Button" value="Train Forward"><br>
+  <input id="treverse"  type="Button" value="Train Reverse"><br>
 </body>
 </html>

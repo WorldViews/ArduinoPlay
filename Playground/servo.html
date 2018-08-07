@@ -1,0 +1,67 @@
+
+<!doctype html>
+<html>
+<head>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+  <script>
+    var server = document.location.origin;
+    console.log("server: "+server);
+    $(function() {
+      $("#server").html(server);
+      //var socket = io.connect("http://localhost:3000");
+      var socket = io.connect(server);
+      var display = $("h1 span");
+      $("#slider").on("input",function() {
+        var val = $(this).val();
+        // Full Cycle: HIGH -> LOW, 2 phases
+        display.text((1000 / (val * 2)).toFixed(2));
+        console.log("sending change:interval "+val);
+        socket.emit("change:interval", val);
+      });
+      //
+      var servoDisplay = $("#servo");
+      $("#servoSlider").on("input",function() {
+        var val = $(this).val();
+        // Full Cycle: HIGH -> LOW, 2 phases
+        servoDisplay.text(val);
+        console.log("sending servo:value "+val);
+        socket.emit("servo.set", val);
+      });
+      socket.on("light.change", data => {
+        //console.log("light.change"+JSON.stringify(data));
+        $("#light_lux").html(data.lux);
+      });
+      socket.on("acc.change", data => {
+        //console.log("light.change"+JSON.stringify(data));
+        $("#acc").html(JSON.stringify(data));
+      });
+      socket.on("pin.change", data => {
+        //console.log("light.change"+JSON.stringify(data));
+        $("#pin9").html(JSON.stringify(data));
+      });
+      socket.on("status", data => {
+        console.log("status"+JSON.stringify(data));
+        $("#status").html(JSON.stringify(data));
+      });
+    });
+  </script>
+</head>
+<body>
+  <h1>Blink speed: <span>0.50</span>hz</h1>
+  Fast <input id="slider" type="range" min="100" max="1000" value="1000"
+              style="width:400px;"> Slow
+  <p>
+  Servo: <span id="servo">0.50</span><br>
+  0 <input id="servoSlider" type="range" min="0" max="180" value="90"
+              style="width:400px;">
+            180
+  <p>
+    Light: <span id="light_lux"></span><br>
+    Pin9: <span id="pin9"></span><br>
+    Accel: <span id="acc"></span><br>
+    Status: <span id="status"></span><br>
+    Server: <span id="server"></span><br>
+  </p>
+</body>
+</html>
