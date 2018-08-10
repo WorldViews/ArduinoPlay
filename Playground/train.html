@@ -3,13 +3,17 @@
 <head>
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+  <script src="js/TrainControl.js"></script>
+  <script src="js/sprintf.js"></script>
   <script>
     var server = document.location.origin;
+    var train = null;
     console.log("server: "+server);
     $(function() {
       $("#server").html(server);
       //var socket = io.connect("http://localhost:3000");
       var socket = io.connect(server);
+      train = new TrainControl(socket);
       var display = $("h1 span");
       $("#slider").on("input",function() {
         var val = $(this).val();
@@ -53,32 +57,26 @@
           socket.emit("pins.set", msg);
       });
       $("#tstop").click(() => {
-          console.log("Train Stop");
-          var msg = [{pin: 2, value: 'low'}];
-          socket.emit("pins.set", msg);
+          train.stop();
       });
       $("#tforward").click(() => {
-          console.log("Train Forward");
-          var msg = [{pin: 2, value: 'high'},
-                     {pin: 3, value: 'high'},
-                     {pin: 6, value: 'low'}];
-          socket.emit("pins.set", msg);
+          train.moveForward();
       });
       $("#treverse").click(() => {
-          console.log("Train Reverse");
-          var msg = [{pin: 2, value: 'high'},
-                     {pin: 3, value: 'low'},
-                     {pin: 6, value: 'high'}];
-          socket.emit("pins.set", msg);
+          train.moveReverse();
       });
       socket.on("light.change", data => {
         //console.log("light.change"+JSON.stringify(data));
         $("#light_lux").html(data.lux);
       });
       socket.on("pin.data", msg => {
-         console.log("pin.data"+JSON.stringify(msg));
+         //console.log("pin.data"+JSON.stringify(msg));
          var jqid = "#pin"+msg.pin;
          $(jqid).html(msg.data);
+         if (msg.pin == "A9") {
+             $("#pin9").html(JSON.stringify(msg.data));
+             train.observeSensor(msg.data);
+         }
       });
       socket.on("status", data => {
         console.log("status"+JSON.stringify(data));
@@ -88,6 +86,8 @@
   </script>
 </head>
 <body>
+  <p>
+   Train State: <span id="trainState"></span>
   <p>
   <input id="tstop"     type="Button" value="Train Stop">
   <p>
