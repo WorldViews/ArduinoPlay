@@ -1,4 +1,6 @@
 
+var TUNNEL = "TUNNEL";
+var program = true;
 
 function getClockTime(){
     return new Date().getTime()/1000;
@@ -8,6 +10,19 @@ function warning(str) {
     console.log(str);
     alert(str);
 }
+
+/*
+class Program {
+    constructor(train) {
+        this.train = train;
+        this.state = "STARTING";
+    }
+
+    update() {
+        if (this.state
+    }
+}
+*/
 
 class TrainControl {
     constructor(sock) {
@@ -22,8 +37,11 @@ class TrainControl {
         if (state != this.state) {
             this.lastTransitionTime = getClockTime();
         }
-        var dt = getClockTime() - this.lastTransitionTime;
         this.state = state;
+    }
+
+    updateStatus() {
+        var dt = getClockTime() - this.lastTransitionTime;
         var status = sprintf("%s %.1f %s",
                              this.state, dt, this.proximity);
         $("#trainState").html(status);
@@ -31,16 +49,40 @@ class TrainControl {
     
     observeSensor(val){
         //console.log("observeVal "+val);
-        this.proximity = "";
-        if(val>30){
+        if(val>100){
             this.proximity = "TUNNEL";
             if (this.state == "Forward")
                 this.stop();
-        };
+        }
+        else {
+            if (this.proximity == TUNNEL && this.state != "Reverse") {
+                // bounce condition.  We were in tunnel, and did not
+                // move backwards, so we must be in bounce condition
+                // and will keep proximity TUNNEL.
+            }
+            else {
+                this.proximity = "";
+            }
+        }
+        if (program) {
+//            this.handleProgram();
+        }
+        this.updateStatus();
+    }
+
+    handleProgram() {
+        var dt = getClockTime() - this.lastTransitionTime;
+        if (this.proximity == "TUNNEL" && this.state == "Stopped" && dt > 4) {
+            this.moveReverse();
+            return;
+        }
+        if (this.state == "Reverse" && dt > 1) {
+            this.moveForward();
+        }
     }
 
     moveForward() {
-        if (this.proxmity == "TUNNEL") {
+        if (this.proximity == "TUNNEL") {
             warning("Cannot move forward at TUNNEL");
             return;
         }
