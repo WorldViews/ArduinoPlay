@@ -14,6 +14,8 @@
       //var socket = io.connect("http://localhost:3000");
       var socket = io.connect(server);
       train = new TrainControl(socket);
+      program = new TrainProgram(train);
+      train.setProgram(program);
       var display = $("h1 span");
       $("#slider").on("input",function() {
         var val = $(this).val();
@@ -74,9 +76,9 @@
          var jqid = "#pin"+msg.pin;
          $(jqid).html(msg.data);
          if (msg.pin == "A9") {
-             $("#pin9").html(JSON.stringify(msg.data));
-             train.observeSensor(msg.data);
+            $("#pin9").html(JSON.stringify(msg.data));
          }
+         train.observe(msg);
       });
       socket.on("status", data => {
         console.log("status"+JSON.stringify(data));
