@@ -170,7 +170,7 @@ class TrainProgram {
             train.stop();
             this.programState = "PAUSING";
         }
-        else if (this.programState == "PAUSING" && train.state == "Stopped" && dt > 2.0) {
+        else if (this.programState == "PAUSING" && train.state == "Stopped" && dt > 6.0) {
             train.moveForward();
             this.programState = "FORWARD";
         }
