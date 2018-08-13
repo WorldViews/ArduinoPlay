@@ -7,6 +7,43 @@ var SerialPort = require("serialport");
 var comPortPath = "com3";
 var comPort = null;
 
+/*
+// This next bit of code is attempt to find the device ID
+// (i.e. which unique arduino board we are talking to.)
+// unfortunatley it only finds a plug-n-play id that is not
+// unique to the device.  Maybe this needs to come from an
+// id burned into the firmware.
+//
+var deviceId = null;
+var deviceName = null;
+
+var DEVICES = {
+    "USB\\VID_239A&PID_8011&MI_00\\6&31E90419&0&0000": "Train 1",
+};
+
+function findDevice() {
+    SerialPort.list((err,results) => {
+        if (err) {
+            console.log("**** Unable list list ports");
+            return;
+        }
+        console.log("------------------------------");
+        console.log("COM Ports:");
+        results.forEach(spec => {
+            console.log(spec);
+            var comName = spec.comName;
+            if (comName.toLowerCase() == comPortPath.toLowerCase()) {
+                deviceId = spec.pnpId;
+                deviceName = DEVICES[deviceId];
+            }
+        });
+        console.log("*** deviceId: "+deviceId);
+        console.log("*** deviceName: "+deviceName);
+        console.log("------------------------------");
+    });
+}
+*/
+
 console.log("***** Running server2.js ****");
 console.log("argv:", argv);
 if (argv.length > 2)
@@ -130,7 +167,6 @@ function setupBoard(comPortPath) {
                                  console.log("got error callback: "+err);
                                  setupInProgress = false;
                              });
-
     if (!setupInProgress) {
         console.log("Failed to get board...");
         return;
@@ -149,6 +185,8 @@ function setupBoard(comPortPath) {
 
     board.on("ready", function() {
         console.log("**** board ready - ****");
+        //console.log(board);
+        //console.log("comPort:", comPort);
         setupInProgress = false;
         if (!comPort.isOpen) {
             console.log("aborting board initialization - com port not open");
@@ -217,9 +255,11 @@ var tickCount = 0;
 function heartbeat() {
     tickCount++;
     var status = (comPort && comPort.isOpen) ? "open" : "closed";
-    console.log("tick... "+tickCount+" "+comPortPath+" "+status);
+    console.log("tick... "+tickCount+" "+port+" "+comPortPath+" "+status);
     if (sock) {
         msg = {type: 'status', portPath: comPortPath,
+               //deviceId: deviceId,
+               //deviceName: deviceName,
                gen: tickCount, haveBoard: false};
         var pin = pins["A9"];
         if (pin && comPort && comPort.isOpen)
@@ -266,6 +306,8 @@ function setPins(msg)
         setPin(pinName, value);
     });
 }
+
+//findDevice();
 
 setupBoard(comPortPath);
 
