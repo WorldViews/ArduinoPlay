@@ -1,21 +1,23 @@
 <!doctype html>
 <html>
 <head>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+  <script src="js/MUSEDefs.js"></script>
   <script src="js/TrainControl.js"></script>
   <script src="js/sprintf.js"></script>
   <script>
-    var server = document.location.origin;
+    var server = MUSE.getParameterByName("server");
+    if (!server)
+        server = document.location.origin;
     var train = null;
+    var program = null;
     console.log("server: "+server);
     $(function() {
       $("#server").html(server);
       //var socket = io.connect("http://localhost:3000");
       var socket = io.connect(server);
       train = new TrainControl(socket);
-      program = new TrainProgram(train);
-      train.setProgram(program);
       var display = $("h1 span");
       $("#slider").on("input",function() {
         var val = $(this).val();
@@ -32,6 +34,14 @@
         servoDisplay.text(val);
         console.log("sending servo:value "+val);
         socket.emit("servo.set", val);
+      });
+      $("#runProgram").click(() => {
+         program = new TrainProgram(train);
+         train.setProgram(program);
+      });
+      $("#stopProgram").click(() => {
+         train.setProgram(null);
+         train.stop();
       });
       $("#btest1").click(() => {
           console.log("Button Test 1");
@@ -91,11 +101,19 @@
   <p>
    Train State: <span id="trainState"></span>
   <p>
-  <input id="tstop"     type="Button" value="Train Stop">
+   <b>Train:</b>
+  &nbsp;&nbsp;&nbsp;
+  <input id="tforward"  type="Button" value="Forward">
+  &nbsp;&nbsp;
+  <input id="tstop"     type="Button" value="Stop">
+  &nbsp;&nbsp;
+  <input id="treverse"  type="Button" value="Reverse">
   <p>
-  <input id="tforward"  type="Button" value="Train Forward">
-  <p>
-  <input id="treverse"  type="Button" value="Train Reverse">
+   <b>Tunnel Loop Program:</b>
+  &nbsp;&nbsp;&nbsp;
+  <input id="runProgram"  type="Button" value="Run">
+  &nbsp;&nbsp;
+  <input id="stopProgram"  type="Button" value="Cancel">
   <p>
     Light: <span id="light_lux"></span><br>
     Pin2: <span id="pin2"></span><br>
