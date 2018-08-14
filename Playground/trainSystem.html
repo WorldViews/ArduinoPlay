@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+  <script src="js/MUSEDefs.js"></script>
+  <script src="js/TrainSystem.js"></script>
+  <script src="js/sprintf.js"></script>
+  <script>
+
+    
+    var train = null;
+    var program = null;
+    var portal = null;
+    var trains = null;
+    $(function() {
+      portal = MUSE.getPortal();
+      trains = new TrainSystem(portal);
+      //$("#server").html(server);
+
+      $("#t1stop").click(() => { trains.stop('train1'); } );
+      $("#t1forward").click(() => { trains.moveForward('train1'); } );
+      $("#t1reverse").click(() => { trains.moveReverse('train1'); } );
+
+      $("#t2stop").click(() => { trains.stop('train2'); } );
+      $("#t2forward").click(() => { trains.moveForward('train2'); } );
+      $("#t2reverse").click(() => { trains.moveReverse('train2'); } );
+
+    });
+  </script>
+</head>
+<body>
+<h3>Train1</h3>
+State: <span id="train1State"></span>
+<br>
+Location: <span id="train1Location"></span>
+<p>
+  <input id="t1forward"  type="Button" value="Forward">
+  &nbsp;&nbsp;
+  <input id="t1stop"     type="Button" value="Stop">
+  &nbsp;&nbsp;
+  <input id="t1reverse"  type="Button" value="Reverse">
+
+<h3>Train2</h3>
+State: <span id="train2State"></span>
+<br>
+Location: <span id="train2Location"></span>
+<p>
+  <input id="t2forward"  type="Button" value="Forward">
+  &nbsp;&nbsp;
+  <input id="t2stop"     type="Button" value="Stop">
+  &nbsp;&nbsp;
+  <input id="t2reverse"  type="Button" value="Reverse">
+  <p>
+</body>
+</html>

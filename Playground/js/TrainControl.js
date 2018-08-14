@@ -44,10 +44,13 @@ class Queue {
 
 
 class TrainControl {
-    constructor(sock) {
+    constructor(trainName, sock, portal) {
+        var inst = this;
         console.log("TrainControl", sock);
+        this.trainName = trainName;
         this.proximity = "";
         this.socket = sock;
+        this.portal = portal;
         this.t0 = getClockTime();
         this.setState("Init");
         this.queue = new Queue();
@@ -56,8 +59,35 @@ class TrainControl {
             "TUNNEL": "A9"
         };
         this.program = null;
+        this.sendMUSE({msgType: 'TrainInit'});
+        portal.sock.on("MUSE.IOT", msg => { inst.handleMUSE(msg); });
     }
 
+    handleMUSE(msg) {
+        console.log("handleMUSE", msg);
+        if (msg.msgType == 'train.request' && msg.train == this.trainName) {
+            console.log("*** handle request "+msg.request);
+            if (msg.request == 'Stop')
+                this.stop();
+            else if (msg.request == 'Forward')
+                this.moveForward();
+            else if (msg.request == 'Reverse')
+                this.moveReverse();
+            else {
+                console.log("*** unknown request "+msg.request);
+            }
+        }
+    }
+    
+    sendMUSE(msg) {
+        if (!this.portal) {
+            console.log("sendMUSE ... no portal");
+            return;
+        }
+        msg.train = this.trainName;
+        this.portal.sendMessage(msg);
+    }
+    
     setProgram(program) {
         this.program = program;
     }
@@ -67,6 +97,7 @@ class TrainControl {
             this.lastTransitionTime = getClockTime();
         }
         this.state = state;
+        this.sendMUSE({msgType: 'train.newState', state: state});
     }
 
     updateStatus() {
@@ -122,6 +153,7 @@ class TrainControl {
 
     newProximity(location) {
         console.log("New Proximity "+location);
+        this.sendMUSE({msgType: 'train.proximity', location: location});
     }
 
     moveForward() {

@@ -8,17 +8,22 @@
   <script src="js/sprintf.js"></script>
   <script>
     var server = MUSE.getParameterByName("server");
+    var trainName = MUSE.getParameterByName("train");
     if (!server)
         server = document.location.origin;
     var train = null;
     var program = null;
+    var musePortal = null;
     console.log("server: "+server);
     $(function() {
+      musePortal = MUSE.getPortal();
       $("#server").html(server);
       //var socket = io.connect("http://localhost:3000");
       var socket = io.connect(server);
-      train = new TrainControl(socket);
+      trainName = trainName || "train_on_"+server;
+      train = new TrainControl(trainName, socket, musePortal);
       var display = $("h1 span");
+      $("#trainName").val(trainName);
       $("#slider").on("input",function() {
         var val = $(this).val();
         // Full Cycle: HIGH -> LOW, 2 phases
@@ -98,6 +103,7 @@
   </script>
 </head>
 <body>
+  <input id="trainName" type="text" value="train1">
   <p>
    Train State: <span id="trainState"></span>
   <p>
