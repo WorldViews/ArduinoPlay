@@ -1,23 +1,39 @@
 
+function handleState(msg)
+{
+    var train = msg.train;
+    if (train == "train1")
+        $("#train1State").html(msg.state);
+    else if (train == "train2")
+        $("#train2State").html(msg.state);
+    else
+        console.log("Unknown train "+train);
+}
+
+function handleProximity(msg)
+{
+    var train = msg.train;
+    if (train == "train1")
+        $("#train1Location").html(msg.location);
+    else if (train == "train2")
+        $("#train2Location").html(msg.location);
+    else
+        console.log("Unknown train "+train);
+}
+
 function handleMessage(msg)
 {
     console.log("got ", msg);
     var train = msg.train;
     if (msg.msgType == "train.newState") {
-        if (train == "train1")
-            $("#train1State").html(msg.state);
-        else if (train == "train2")
-            $("#train2State").html(msg.state);
-        else
-            console.log("Unknown train "+train);
+        handleState(msg);
     }
     if (msg.msgType == "train.proximity") {
-        if (train == "train1")
-            $("#train1Location").html(msg.location);
-        else if (train == "train2")
-            $("#train2Location").html(msg.location);
-        else
-            console.log("Unknown train "+train);
+        handleProximity(msg);
+    }
+    if (msg.msgType == "train.status") {
+        handleState(msg);
+        handleProximity(msg);
     }
     else {
         console.log("Unknown type for msg", msg);

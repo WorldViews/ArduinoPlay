@@ -48,6 +48,7 @@ class TrainControl {
         var inst = this;
         console.log("TrainControl", sock);
         this.trainName = trainName;
+        this.state = null;
         this.proximity = "";
         this.socket = sock;
         this.portal = portal;
@@ -61,6 +62,22 @@ class TrainControl {
         this.program = null;
         this.sendMUSE({msgType: 'TrainInit'});
         portal.sock.on("MUSE.IOT", msg => { inst.handleMUSE(msg); });
+        this.timer = setInterval(() => this.timerFun(), 1000);
+    }
+
+    timerFun() {
+        console.log("**** TICK ****");
+        this.sendStatus();
+    }
+
+    sendStatus() {
+        var msg = { msgType: 'train.status',
+                    train: this.trainName,
+                    location: this.proximity,
+                    state: this.state
+                  };
+        //console.log("sending "+JSON.stringify(msg));
+        this.sendMUSE(msg);
     }
 
     handleMUSE(msg) {
@@ -97,7 +114,8 @@ class TrainControl {
             this.lastTransitionTime = getClockTime();
         }
         this.state = state;
-        this.sendMUSE({msgType: 'train.newState', state: state});
+        //this.sendMUSE({msgType: 'train.newState', state: state});
+        this.sendStatus();
     }
 
     updateStatus() {
@@ -142,6 +160,7 @@ class TrainControl {
         if(prox) {
             //console.log("Detected Proximity "+location);
             if (location != this.proximity) {
+                this.proximity = location;
                 this.newProximity(location);
             }
             this.proximity = location;
@@ -153,7 +172,8 @@ class TrainControl {
 
     newProximity(location) {
         console.log("New Proximity "+location);
-        this.sendMUSE({msgType: 'train.proximity', location: location});
+        //this.sendMUSE({msgType: 'train.proximity', location: location});
+        this.sendStatus();
     }
 
     moveForward() {
