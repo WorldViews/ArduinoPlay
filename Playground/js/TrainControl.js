@@ -95,7 +95,7 @@ class TrainControl {
             }
         }
     }
-    
+
     sendMUSE(msg) {
         if (!this.portal) {
             console.log("sendMUSE ... no portal");
@@ -104,11 +104,11 @@ class TrainControl {
         msg.train = this.trainName;
         this.portal.sendMessage(msg);
     }
-    
+
     setProgram(program) {
         this.program = program;
     }
-    
+
     setState(state) {
         if (state != this.state) {
             this.lastTransitionTime = getClockTime();
@@ -136,12 +136,26 @@ class TrainControl {
             if (msg.pin == pin)
                 train.observeProximitySensor(location, msg.data);
         }
-        if (this.proximity == "TUNNEL" && this.state == "Forward")
-            this.stop();
+        this.checkStopCondition();
         if (this.program) {
             this.program.update();
         }
         this.updateStatus();
+    }
+
+    checkStopCondition() {
+        if (this.trainName == "train1") {
+            if (this.proximity == "TUNNEL" && this.state == "Forward")
+                this.stop();
+        }
+        else if (this.trainName == "train2") {
+            if (this.proximity == "TUNNEL" && this.state == "Reverse")
+                this.stop();
+        }
+        else {
+            this.stop();
+            warning("Unknown train name "+this.trainName);
+        }
     }
 
     observeProximitySensor(location, val){
@@ -177,7 +191,7 @@ class TrainControl {
     }
 
     moveForward() {
-        if (this.proximity == "TUNNEL") {
+        if (this.proximity== "TUNNEL"&& this.trainName== "train1") {
             warning("Cannot move forward at TUNNEL");
             return;
         }
@@ -190,6 +204,10 @@ class TrainControl {
     }
 
     moveReverse() {
+        if (this.proximity== "TUNNEL"&& this.trainName== "train2") {
+            warning("Cannot move forward at TUNNEL");
+            return;
+        }
         console.log("Train Reverse");
         this.setState("Reverse");
         var msg = [{pin: 2, value: 'high'},
@@ -216,7 +234,7 @@ class TrainProgram {
     status() {
         return sprintf("%s %s", this.name, this.programState);
     }
-    
+
     update() {
         var train = this.train;
         var dt = getClockTime() - train.lastTransitionTime;
