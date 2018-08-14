@@ -71,8 +71,12 @@ class TrainControl {
 
     updateStatus() {
         var dt = getClockTime() - this.lastTransitionTime;
-        var status = sprintf("%s %.1f %s",
+        var status = sprintf("%s %.1f %s<br>",
                              this.state, dt, this.proximity);
+        if (this.program)
+            status += "Program: " + this.program.status();
+        else
+            status += "&nbsp;";
         $("#trainState").html(status);
     }
 
@@ -151,11 +155,16 @@ class TrainControl {
 }
 
 class TrainProgram {
-    constructor(train) {
+    constructor(train, name) {
+        this.name = name || "Tunnel Looper";
         this.train = train;
         this.programState = "INIT";
     }
 
+    status() {
+        return sprintf("%s %s", this.name, this.programState);
+    }
+    
     update() {
         var train = this.train;
         var dt = getClockTime() - train.lastTransitionTime;
@@ -165,6 +174,10 @@ class TrainProgram {
             train.moveReverse();
             this.programState = "REVERSE";
             return;
+        }
+        else if (this.programState == "INIT") {
+            train.moveForward();
+            this.programState = "FORWARD";
         }
         else if (this.programState == "REVERSE" && train.state == "Reverse" && dt > 2.0) {
             train.stop();
