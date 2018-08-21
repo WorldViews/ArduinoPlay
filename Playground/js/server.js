@@ -63,12 +63,22 @@ var servo = null;
 //var board = new five.Board();
 var board = null;
 var pins = {
+    0: null,
+    1: null,
     2: null,
     3: null,
     6: null,
     10: null,
+    11: null,
     "A9": null,
 };
+
+var pinModes = {
+    0: five.Pin.INPUT,
+    1: five.Pin.INPUT,
+    10: five.Pin.INPUT,
+    11: five.Pin.INPUT,
+}
 
 var http = require("http");
 var express = require("express");
@@ -198,7 +208,9 @@ function setupBoard(comPortPath) {
         servo = new five.Servo({pin: 12, board: board});
         for (var pinName in pins) {
             console.log("Creating pin "+pinName);
-            var pin = new five.Pin({pin: pinName, board: board});
+            var pin = new five.Pin({pin: pinName,
+                                    mode: pinModes[pinName],
+                                    board: board});
             pins[pinName] = pin;
             setupPin(pin, pinName);
             /*
@@ -307,6 +319,26 @@ function setPins(msg)
     });
 }
 
+function showState(pinName, state)
+{
+    console.log("state for pin "+pinName);
+    console.log(JSON.stringify(state));
+    let msg = {msgType: 'pinStatus', pin: pinName,
+               state: state};
+    sendMessage(msg);
+}
+
+function requestStatus(msg)
+{
+    console.log("showStatus");
+    for (let pinName in pins) {
+        let pin = pins[pinName];
+        console.log("querying status of pin "+pinName);
+        pin.query((state) => showState(pinName, state))
+    }
+}
+
+
 //findDevice();
 
 setupBoard(comPortPath);
@@ -331,6 +363,9 @@ io.on("connection", function(socket) {
     });
     socket.on("pins.set", function(msg) {
         setPins(msg);
+    });
+    socket.on("requestStatus", function(msg) {
+        requestStatus(msg);
     });
     socket.on('disconnect', obj => handleDisconnect(socket, obj));
 });
