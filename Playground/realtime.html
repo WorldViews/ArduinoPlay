@@ -71,6 +71,11 @@
                      {pin: 6, value: 'high'}];
           socket.emit("pins.set", msg);
       });
+      $("#showStatus").click(() => {
+          console.log("Request show status");
+          var msg = [];
+          socket.emit("requestStatus", msg);
+      });
       socket.on("light.change", data => {
         //console.log("light.change"+JSON.stringify(data));
         $("#light_lux").html(data.lux);
@@ -115,6 +120,7 @@
     Status: <span id="status"></span><br>
     Server: <span id="server"></span><br>
   </p>
+  <input id="showStatus"  type="Button" value="Show Status"><br>
   <input id="btest1"    type="Button" value="Test 1"><br>
   <input id="btest2"    type="Button" value="Test 2"><br>
   <input id="btest3"    type="Button" value="Test 3"><br>
