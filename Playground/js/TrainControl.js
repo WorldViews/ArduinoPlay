@@ -55,9 +55,11 @@ class TrainControl {
         this.t0 = getClockTime();
         this.setState("Init");
         this.queue = new Queue();
-        this.THRESHOLD = 100;
+        //this.THRESHOLD = 100;
+        this.THRESHOLD = 0.5;
         this.proximitySensors = {
-            "TUNNEL": "A9"
+            //"TUNNEL": "A9"
+            "TUNNEL": 0
         };
         this.program = null;
         this.sendMUSE({msgType: 'TrainInit'});
