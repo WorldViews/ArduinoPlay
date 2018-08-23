@@ -133,7 +133,8 @@ function setupPin(pin, pinName) {
             //console.log("ignore old pin...");
             return;
         }
-        sendMessage("pin.data", {pin: pinName, data: "high"});
+        //sendMessage("pin.data", {pin: pinName, data: "high"});
+        sendMessage("pin.data", {pin: pinName, data: 1});
     });
     pin.on("low", (data) => {
         //console.log("pin "+pinName+" "+data);
@@ -141,7 +142,8 @@ function setupPin(pin, pinName) {
             //console.log("ignore old pin...");
             return;
         }
-        sendMessage("pin.data", {pin: pinName, data: "low"});
+        //sendMessage("pin.data", {pin: pinName, data: "low"});
+        sendMessage("pin.data", {pin: pinName, data: 0});
     });
 }
 
