@@ -4,6 +4,12 @@
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
   <script>
+    function pinNum(pin) {
+        if (pin[0] == 'A')
+            return pin.slice(1);
+        return pin;    
+    }
+    
     var server = document.location.origin;
     console.log("server: "+server);
     $(function() {
@@ -84,12 +90,14 @@
         //console.log("light.change"+JSON.stringify(data));
         $("#acc").html(JSON.stringify(data));
       });
-      socket.on("pin.change", data => {
-        $("#pin9").html(JSON.stringify(data));
-      });
+      //socket.on("pin.change", data => {
+      //  console.log("pin.change"+JSON.stringify(data));
+      //  $("#pin9").html(JSON.stringify(data));
+      //});
       socket.on("pin.data", msg => {
          console.log("pin.data"+JSON.stringify(msg));
-         var jqid = "#pin"+msg.pin;
+         var pin = pinNum(msg.pin);
+         var jqid = "#pin"+pin;
          $(jqid).html(msg.data);
       });
       socket.on("status", data => {
