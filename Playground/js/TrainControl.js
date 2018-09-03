@@ -16,7 +16,7 @@ function warning(str) {
 class Queue {
     constructor(maxNum) {
         this.vals = [];
-        this.maxNum = maxNum || 20;
+        this.maxNum = maxNum || 80;
         this.i = 0;
     }
 
@@ -135,8 +135,10 @@ class TrainControl {
         var PS = this.proximitySensors;
         for (var location in PS) {
             var pin = PS[location];
-            if (msg.pin == pin)
+            if (msg.pin == pin) {
+                console.log("msg: "+JSON.stringify(msg));
                 train.observeProximitySensor(location, msg.data);
+            }
         }
         this.checkStopCondition();
         if (this.program) {
@@ -163,8 +165,8 @@ class TrainControl {
     observeProximitySensor(location, val){
         //console.log("observeVal "+val);
         this.queue.push(val);
-        //this.queue.dump();
-        var N = 3;
+        this.queue.dump();
+        var N = 2;
         var lastN = this.queue.lastN(N);
         var prox = true;
         for (var i=0; i<N; i++) {
