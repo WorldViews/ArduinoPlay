@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+  <script src="js/MUSEDefs.js"></script>
+  <script src="js/TrainSystem.js"></script>
+  <script src="js/sprintf.js"></script>
+  <script src="http://sasaki:4000/controls/js/PortalClient.js"></script>
+  <script>
+
+   portalURL = "http://sasaki:4000";
+   let pClient = new PortalClient(portalURL);
+
+function setupMovieUI() {
+   $("#seek0").click( e => {
+      console.log("seek");
+      pClient.setPlayTime(5);
+   });
+   $("#go").click(  e => {
+      console.log("go");
+      pClient.play();
+   });
+   $("#stop").click(  e => {
+      console.log("stop");
+      pClient.pause();
+   });
+}
+   var train = null;
+   var program = null;
+   var portal = null;
+   var trains = null;
+   $(function() {
+      setupMovieUI();
+      portal = MUSE.getPortal();
+      trains = new TrainSystem(portal);
+      //$("#server").html(server);
+
+      $("#t1stop").click(() => { trains.stop('train1'); } );
+      $("#t1forward").click(() => { trains.moveForward('train1'); } );
+      $("#t1reverse").click(() => { trains.moveReverse('train1'); } );
+
+      $("#t2stop").click(() => { trains.stop('train2'); } );
+      $("#t2forward").click(() => { trains.moveForward('train2'); } );
+      $("#t2reverse").click(() => { trains.moveReverse('train2'); } );
+
+    });
+  </script>
+</head>
+<body>
+  <h3>Movie</h3>
+<button id="seek0">|&lt;</button>&nbsp;
+<button id="go">Play</button>&nbsp;
+<button id="stop">Pause</button>
+
+<h3>Train1</h3>
+State: <span id="train1State"></span>
+<br>
+Location: <span id="train1Location"></span>
+<p>
+  <input id="t1forward"  type="Button" value="Forward">
+  &nbsp;&nbsp;
+  <input id="t1stop"     type="Button" value="Stop">
+  &nbsp;&nbsp;
+  <input id="t1reverse"  type="Button" value="Reverse">
+
+<h3>Train2</h3>
+State: <span id="train2State"></span>
+<br>
+Location: <span id="train2Location"></span>
+<p>
+  <input id="t2forward"  type="Button" value="Forward">
+  &nbsp;&nbsp;
+  <input id="t2stop"     type="Button" value="Stop">
+  &nbsp;&nbsp;
+  <input id="t2reverse"  type="Button" value="Reverse">
+  <p>
+
+Program   State: <span id="programState"></span>
+<input id="Run" type="Button" value="Run">
+<input id="Cancel" type="Button" value="Cancel">
+
+</body>
+</html>
