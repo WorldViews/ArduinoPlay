@@ -67,24 +67,29 @@ class TrainSystem
         this.movingTrain = null;//remove soon
         this.programState = "S1";
         this.portal = portal;
-        portal.sock.on("MUSE.IOT", msg => {
+        this.channel = "MUSE.IOT";
+        portal.sock.on(this.channel, msg => {
             handleMessage(msg);
             inst.updateProgram();
         });
     }
 
+    sendMessage(msg) {
+        this.portal.sendMessage(msg, this.channel);
+    }
+    
     moveForward(train) {
-        this.portal.sendMessage(
+        this.sendMessage(
             {msgType: 'train.request', request: 'Forward', train: train});
     }
 
     moveReverse(train) {
-        this.portal.sendMessage(
+        this.sendMessage(
             {msgType: 'train.request', request: 'Reverse', train: train});
     }
 
     stop(train) {
-        this.portal.sendMessage(
+        this.sendMessage(
             {msgType: 'train.request', request: 'Stop', train: train});
     }
 

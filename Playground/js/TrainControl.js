@@ -47,6 +47,7 @@ class TrainControl {
     constructor(trainName, sock, portal) {
         var inst = this;
         console.log("TrainControl", sock);
+        this.channel = "MUSE.IOT";
         this.trainName = trainName;
         this.state = null;
         this.proximity = "";
@@ -62,8 +63,8 @@ class TrainControl {
             "TUNNEL": 0
         };
         this.program = null;
-        this.sendMUSE({msgType: 'TrainInit'});
-        portal.sock.on("MUSE.IOT", msg => { inst.handleMUSE(msg); });
+        this.sendMessage({msgType: 'TrainInit'});
+        portal.sock.on(this.channel, msg => { inst.handleMUSE(msg); });
         this.timer = setInterval(() => this.timerFun(), 1000);
     }
 
@@ -79,7 +80,7 @@ class TrainControl {
                     state: this.state
                   };
         //console.log("sending "+JSON.stringify(msg));
-        this.sendMUSE(msg);
+        this.sendMessage(msg);
     }
 
     handleMUSE(msg) {
@@ -98,13 +99,13 @@ class TrainControl {
         }
     }
 
-    sendMUSE(msg) {
+    sendMessage(msg) {
         if (!this.portal) {
-            console.log("sendMUSE ... no portal");
+            console.log("sendMessage ... no portal");
             return;
         }
         msg.train = this.trainName;
-        this.portal.sendMessage(msg);
+        this.portal.sendMessage(msg, this.channel);
     }
 
     setProgram(program) {
@@ -116,7 +117,6 @@ class TrainControl {
             this.lastTransitionTime = getClockTime();
         }
         this.state = state;
-        //this.sendMUSE({msgType: 'train.newState', state: state});
         this.sendStatus();
     }
 
@@ -190,7 +190,6 @@ class TrainControl {
 
     newProximity(location) {
         console.log("New Proximity "+location);
-        //this.sendMUSE({msgType: 'train.proximity', location: location});
         this.sendStatus();
     }
 

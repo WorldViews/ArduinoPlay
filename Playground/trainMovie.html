@@ -9,9 +9,79 @@
   <script src="http://sasaki:4000/controls/js/PortalClient.js"></script>
   <script>
 
-   portalURL = "http://sasaki:4000";
-   let pClient = new PortalClient(portalURL);
+var portalURL = "http://sasaki:4000";
+let pClient = new PortalClient(portalURL);
 
+var train = null;
+var program = null;
+var portal = null;
+var trains = null;
+var scriptStartTime = 0;
+var scriptRunSpeed = 0;
+
+var SCRIPT = [
+    {t: 0,
+     action: () => { console.log("start");
+       let imageUrl = "/video/KitchenTrain/KitchenDemo1.mp4";
+       console.log("imageUrl: "+imageUrl);
+                     pClient.setImageUrl(imageUrl);
+                     pClient.setPlayTime(0);
+                     pClient.play();
+     }
+    },
+    {t: 25,
+     action: () => { 
+                     trains.moveForward('train1');
+    }},
+    {t: 28,
+     action: () => { console.log("step3 at 5");
+                     trains.stop('train1');
+    }},
+    {t: 30,
+     action: () => { 
+//                     pClient.pause();
+    }},
+];
+
+SCRIPT_TIMERS = [];
+
+function handleStep(step)
+{
+    console.log("Handling step at time "+step.t);
+    step.action();
+}
+
+function showScriptTime()
+{
+    var t = getClockTime();
+    var st = scriptRunSpeed * (t - scriptStartTime);
+    $("#scriptTime").html(sprintf("%.1f", st));
+}
+
+function runScript(script)
+{
+    script = script || SCRIPT;
+    scriptStartTime = getClockTime();
+    scriptRunSpeed = 1;
+    console.log("runScript");
+    SCRIPT.forEach(step => {
+        //SCRIPT_TIMERS.push(setTimeout(step.action, step.t*1000));
+        SCRIPT_TIMERS.push(setTimeout(() => handleStep(step), step.t*1000));
+    });
+}
+
+function stopScript()
+{
+    console.log("stopScript");
+    scriptRunSpeed = 1;
+    SCRIPT_TIMERS.forEach(timer => {
+        console.log("cancel step");
+        clearTimeout(timer);
+    });
+    SCRIPT_TIMERS = [];
+    pClient.pause();
+}
+    
 function setupMovieUI() {
    $("#seek0").click( e => {
       console.log("seek");
@@ -25,13 +95,13 @@ function setupMovieUI() {
       console.log("stop");
       pClient.pause();
    });
+   $("#RunScript").click( e => runScript() );
+   $("#StopScript").click(  e => stopScript() );
 }
-   var train = null;
-   var program = null;
-   var portal = null;
-   var trains = null;
+
    $(function() {
       setupMovieUI();
+      setInterval(showScriptTime, 1000);
       portal = MUSE.getPortal();
       trains = new TrainSystem(portal);
       //$("#server").html(server);
@@ -48,7 +118,14 @@ function setupMovieUI() {
   </script>
 </head>
 <body>
-  <h3>Movie</h3>
+<h3>Overall Script</h3>
+<input id="RunScript" type="Button" value="Run">
+&nbsp;&nbsp;
+<input id="StopScript" type="Button" value="Stop">
+&nbsp;&nbsp;
+<span id="scriptTime"></span><br>
+
+<h3>Movie</h3>
 <button id="seek0">|&lt;</button>&nbsp;
 <button id="go">Play</button>&nbsp;
 <button id="stop">Pause</button>

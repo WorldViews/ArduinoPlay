@@ -6,19 +6,30 @@ MUSE.getParameterByName = function(name) {
     return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
 }
 
-MUSE.museServer = "platonia:4000";
+function getClockTime()
+{
+    return new Date().getTime()/1000.0;
+}
+
+MUSE.getClockTime = getClockTime;
+
+
+//MUSE.museServer = "platonia:4000";
+MUSE.museServer = "sasaki:4000";
 
 class MUSEPortal
 {
     constructor(name) {
-        this.name = name || document.location.host;
-        this.sock = io.connect(MUSE.museServer);
-        this.sendMessage({'msgType': 'init'});
+        this.name = name || "client_"+document.location.host;
+        this.server = MUSE.museServer;
+        this.sock = io.connect(this.server);
+        this.sendMessage({'msgType': 'init', 'client': this.name});
         MUSE.portal = this;
     }
 
-    sendMessage(msg) {
-        this.sock.emit("MUSE.IOT", msg);
+    sendMessage(msg, channel) {
+        channel = channel || "MUSE.IOT";
+        this.sock.emit(channel, msg);
     }
 }
 
