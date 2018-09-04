@@ -136,7 +136,7 @@ class TrainControl {
         for (var location in PS) {
             var pin = PS[location];
             if (msg.pin == pin) {
-                console.log("msg: "+JSON.stringify(msg));
+                //console.log("msg: "+JSON.stringify(msg));
                 train.observeProximitySensor(location, msg.data);
             }
         }
@@ -165,7 +165,7 @@ class TrainControl {
     observeProximitySensor(location, val){
         //console.log("observeVal "+val);
         this.queue.push(val);
-        this.queue.dump();
+        //this.queue.dump();
         var N = 2;
         var lastN = this.queue.lastN(N);
         var prox = true;
