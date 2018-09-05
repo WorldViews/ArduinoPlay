@@ -18,6 +18,7 @@ var portal = null;
 var trains = null;
 var scriptStartTime = 0;
 var scriptRunSpeed = 0;
+var DEMO_TRAIN = "train2";
 
 var SCRIPT = [
     {t: 0,
@@ -29,18 +30,10 @@ var SCRIPT = [
                      pClient.play();
      }
     },
-    {t: 25,
-     action: () => { 
-                     trains.moveForward('train1');
-    }},
-    {t: 28,
-     action: () => { console.log("step3 at 5");
-                     trains.stop('train1');
-    }},
-    {t: 30,
-     action: () => { 
-//                     pClient.pause();
-    }},
+    {t: 24.8, action: () => { trains.moveForward(DEMO_TRAIN); }},
+    {t: 26,   action: () => { pClient.pause(); }},
+    {t: 29.1, action: () => { trains.stop(DEMO_TRAIN); }},
+    {t: 40,   action: () => { trains.moveReverse(DEMO_TRAIN); }},
 ];
 
 SCRIPT_TIMERS = [];
