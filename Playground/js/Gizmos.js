@@ -3,8 +3,8 @@ var t = 0;
 
 var maxTrailPts = 300;
 var mouseDown = false;
-var adjust = null;
 var selectedWidget = null;
+var selectedGrip = null;
 
 function relativePos ( event ) {
   var bounds = event.target.getBoundingClientRect();
@@ -30,62 +30,75 @@ function findEndPoint(px, py, L, x,y)
     return {x: x + L*nvx, y: y + L*nvy};
 }
 
-
 class Widget {
-    constructor() {
-        this.R = 80.0;
-        this.L = 300;
-        this.x0 = 250;
-        this.y0 = 400;
-        this.px = this.x0;
+    constructor(opts) {
+        this.opts = opts;
+    }
+    
+    getDef() {
+        var opts = this.opts;
+        if (opts.driver && typeof opts.driver != "string")
+            opts.driver = opts.driver.name;
+        return this.opts
+    }
+}
+
+class SlipRod extends Widget {
+    constructor(opts) {
+        super(opts);
+        this.opts.type = "SlipRod";
+        this.name = opts.name || "slipRod";
+        this.L = opts.L || 50;
+        this.px = opts.px;
+        this.py = opts.py;
         //this.py = 240;
-        this.py = 280;
-        this.py = 290;
-        this.py = 200;
-        this.py = 190;
+        this.driver = opts.driver;
         this.trail = [];
     }
 
+    
     clearTrail()
     {
         this.trail = [];
     }
 
     update() {
-        var w = -t;
-        this.pt1 = {
-            x: this.x0 + this.R*Math.cos(w),
-            y: this.y0 + this.R*Math.sin(w)
-        }
+        this.pt1 = this.driver.pt2;
         this.pt2 = findEndPoint(this.px, this.py, this.L, this.pt1.x, this.pt1.y);
     }
     
+    findGrip(mp) {
+        if (dist(mp.x,mp.y, this.px, this.py) < 8)
+            return "slideHole";
+        return null;
+    }
+
+    adjust(grip, mp) {
+        console.log("crank.adjust "+mp);
+        if (grip == "slideHole") {
+            this.px = mp.x;
+            this.py = mp.y;
+        }
+        else {
+            console.log("Unexpected grip name "+grip);
+        }
+    }
+
     draw(c) {
         var ctx = c.getContext("2d");
-        var x0 = this.x0, y0 = this.y0;
-        var pt1 = this.pt1;
-        var pt2 = this.pt2;
         var trail = this.trail;
         ctx.lineWidth = 1;
-        ctx.beginPath();
-        // Draw drivepoint path
-        ctx.arc(x0, y0, this.R, 0, 2 * Math.PI);
-        ctx.stroke();
         // Draw anchor point
         ctx.beginPath();
         ctx.arc(this.px, this.py, 3, 0, 2 * Math.PI);
         ctx.stroke();
-        // Draw crank
-        ctx.moveTo(x0,y0);
-        ctx.lineTo(pt1.x, pt1.y);
-        ctx.stroke();
         // Draw rod
         ctx.beginPath();
         ctx.lineWidth = 3;
-        ctx.moveTo(pt1.x, pt1.y);
-        ctx.lineTo(pt2.x, pt2.y);
+        ctx.moveTo(this.pt1.x, this.pt1.y);
+        ctx.lineTo(this.pt2.x, this.pt2.y);
         ctx.stroke();
-        trail.push(pt2);
+        trail.push(this.pt2);
         // draw trail
         ctx.lineWidth = 0.5;
         if (trail.length > maxTrailPts)
@@ -97,12 +110,15 @@ class Widget {
     }
 }
 
-class Crank {
-    constructor(x0, y0, R, w) {
-        this.w = w;
-        this.R = R;
-        this.x0 = x0;
-        this.y0 = y0;
+class Crank extends Widget {
+    constructor(opts) {
+        super(opts);
+        this.opts.type = "SlipRod";
+        this.name = opts.name || "crank";
+        this.w = opts.w || 1;
+        this.R = opts.R || 20;
+        this.x0 = opts.x0;
+        this.y0 = opts.y0;
         this.trail = [];
     }
 
@@ -118,7 +134,31 @@ class Crank {
             y: this.y0 + this.R*Math.sin(a)
         }
     }
-    
+
+                
+    findGrip(mp) {
+        var d = dist(mp.x,mp.y, this.x0, this.y0);
+        if (d < 5)
+            return "XY0";
+        if (Math.abs(d - this.R) < 5)
+            return "R";
+        return null;
+    }
+
+    adjust(grip, mp) {
+        console.log("crank.adjust "+mp);
+        if (grip == "R") {
+            this.R = dist(mp.x,mp.y, this.x0,this.y0)
+        }
+        else if (grip == "XY0") {
+            this.x0 = mp.x;
+            this.y0 = mp.y;
+        }
+        else {
+            console.log("Unexpected grip name "+grip);
+        }
+    }
+
     draw(c) {
         var ctx = c.getContext("2d");
         var x0 = this.x0, y0 = this.y0;
@@ -148,9 +188,27 @@ class Crank {
 class Model {
     constructor(canvName) {
         this.canvName = canvName || "myCanvas";
-        this.widget = new Widget();
-        this.widgets = [this.widget];
-//        this.widgets.push(new Crank(400,300, 50, 2.2));
+        var crank = new Crank({x0: 250, y0: 400, R: 50, w: 2.2});
+        var slipRod = new SlipRod({px: 250, py: 200, L: 300, driver: crank});
+        var crank2 = new Crank({x0: 350, y0: 300, R: 20, w: 1.1});
+        var slipRod2 = new SlipRod({px: 320, py: 200, L: 200, driver: crank2});
+        var slipRod3 = new SlipRod({px: 120, py: 100, L: 200, driver: slipRod});
+        this.widgets = [crank, slipRod, crank2, slipRod2, slipRod3];
+        this.dt = 0.03;
+    }
+
+    dump() {
+        var def = this.getDef();
+        
+        console.log(JSON.stringify(def, null, 3));
+    }
+    
+    getDef() {
+        var def = {type: "Model", widgets: []};
+        this.widgets.forEach(w => {
+            def.widgets.push(w.getDef());
+        });
+        return def;
     }
     
     redraw() {
@@ -160,10 +218,31 @@ class Model {
         this.widgets.forEach(w => w.draw(c));
     }
     
+    clear() {
+        this.widgets.forEach(w => w.clearTrail());
+    }
+
+    play() { this.dt = 0.03; }
+
+    pause() { this.dt = 0; }
+    
     update() {
-        t += 0.03;
+        t += this.dt;
         this.widgets.forEach(w => w.update());
         this.redraw();
+    }
+}
+
+function togglePlay()
+{
+    model.dump();
+    if ($("#play").val() == "play") {
+        model.play();
+        $("#play").val("pause");
+    }
+    else {
+        model.pause();
+        $("#play").val("play");
     }
 }
 
@@ -172,6 +251,9 @@ var model = null;
 $(document).ready(() => {
     model = new Model();
     var w = model.widget;
+    $("#play").click(() => {
+        togglePlay();
+    });
     $("#c1").click(() => {
         w.clearTrail();
         w.py = 190;
@@ -195,16 +277,18 @@ $(document).ready(() => {
     $("#myCanvas").mousedown(e => {
         var mp = relativePos(e);
         mouseDown = true;
-        adjust = "anchor";
-        widgets = [model.widget];
+        selectedGrip = null;
         selectedWidget = null;
-        widgets.forEach(w => {
-            selectedWidget = w;
-            if (dist(mp.x,mp.y,w.x0, w.y0) < 8)
-                adjust = "XY0";
-            if (Math.abs(dist(mp.x,mp.y, w.x0, w.y0) - w.R) < 5)
-                adjust = "R";
+        model.widgets.forEach(w => {
+            if (selectedWidget == null) {
+                selectedGrip = w.findGrip(mp);
+                if (selectedGrip != null) {
+                    selectedWidget = w;
+                }
+            }
         });
+        console.log("selectedGrip: "+selectedGrip);
+        console.log("selectedWidget: "+selectedWidget);
     });
     $("#myCanvas").mouseup(e => { mouseDown = false; });
     $("#myCanvas").mousemove(e => {
@@ -214,19 +298,9 @@ $(document).ready(() => {
         if (w == null)
             return;
         var mp = relativePos(e);
-        console.log("x y: "+mp.x+" "+mp.y);
-        if (adjust == "anchor") {
-            w.px = mp.x;
-            w.py = mp.y;
-        }
-        if (adjust == "R") {
-            w.R = dist(mp.x,mp.y, w.x0,w.y0)
-        }
-        if (adjust == "XY0") {
-            w.x0 = mp.x;
-            w.y0 = mp.y;
-        }
-        w.clearTrail();
+        //console.log("x y: "+mp.x+" "+mp.y);
+        w.adjust(selectedGrip, mp);
+        model.clear();
     });
 
     setInterval(() => model.update(), 1000/30);
