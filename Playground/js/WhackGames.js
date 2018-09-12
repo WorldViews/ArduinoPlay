@@ -6,6 +6,16 @@ var selectedWidget = null;
 var selectedGrip = null;
 var showTrails = true;
 
+function rand(n)
+{
+    return Math.floor(Math.random()*1000000) % n;
+}
+
+function getClockTime()
+{
+    return new Date().getTime()/1000.0;
+}
+
 function clone(obj) {
     return JSON.parse(JSON.stringify(obj));
 }
@@ -61,6 +71,14 @@ class Hole extends Widget {
         this.R = opts.R || 20;
         this.x0 = opts.x0;
         this.y0 = opts.y0;
+        this.strokeStyle = "#000000";
+        this.fillStyle = "#000000";
+        this.fillStyle = null;
+    }
+
+    setOccupied(v) {
+	this.occupied = v;
+	this.fillStyle = v ? "#000000" : null;
     }
 
     findGrip(pt) {
@@ -88,17 +106,17 @@ class Hole extends Widget {
         var x0 = this.x0, y0 = this.y0;
         var trail = this.trail;
         ctx.lineWidth = 1;
-        ctx.strokeStyle = "#000000";
-        ctx.fillStyle = "#000000";
+        ctx.strokeStyle = this.strokeStyle;
+        ctx.fillStyle = this.fillStyle;
         if (this.selected) {
             ctx.strokeStyle = "#ff0000";
-            ctx.fillStyle = "#ff0000";
         }
         ctx.beginPath();
         // Draw drivepoint path
         ctx.arc(x0, y0, this.R, 0, 2 * Math.PI);
         ctx.stroke();
-        ctx.fill();
+	if (this.fillStyle)
+	    ctx.fill();
     }
 }
 
@@ -108,19 +126,40 @@ class Game {
         this.widgets = [];
         this.widgetsByName = {};
         this.createHoles(3,3);
-        //this.loadDefault();
-        //this.timeout = setTimeout(1000, e => inst.handleTick());
         this.delay = 1000;
+	this.lingerTime = 2.5;
+	this.start();
+    }
+
+    start() {
+	this.lastMoveTime = 0;
+	this.molePos = 0;
+	this.molePoints = -1;
+	this.farmerPoints = 0;
         this.handleTick();
     }
+    
 
     handleTick() {
         console.log("tick");
         var inst = this;
-        this.select(null);
-        this.timeout = setTimeout(e => inst.handleTick(), 1000);
+	var t = getClockTime();
+	var dt = t - this.lastMoveTime;
+	if (dt > this.lingerTime) {
+	    this.molePoints++;
+	    this.moveMoles();
+	}
+        this.timeout = setTimeout(e => inst.handleTick(), 1000/30);
     }
-    
+
+    moveMoles() {
+	console.log("move moles");
+	this.lastMoveTime = getClockTime();
+	var i = rand(this.widgets.length);
+	this.widgets.forEach(w => w.setOccupied(false));
+	this.widgets[i].setOccupied(true);
+    }
+
     createHoles(n,m) {
         this.widgets = [];
         this.widgetsByName = {};
@@ -156,15 +195,22 @@ class Game {
     select(sw) {
         this.widgets.forEach(w => {w.selected = (w == sw)});true;
     }
-    
-    startAuto() {
-        
+
+    handleHit(w) {
+	if (w.occupied) {
+	    this.farmerPoints++;
+	    //this.molePoints--;
+	    this.moveMoles();
+	}
     }
     
     update() {
         t += this.dt;
         this.redraw();
-        var statusText = "";
+        var statusText = "mole: "+this.molePoints+
+	    " farmer: "+this.farmerPoints;
+	var score = this.farmerPoints - this.molePoints;
+	statusText += " score: "+score;
         $("#status").html(statusText);
     }
 }
@@ -174,7 +220,7 @@ var game = null;
 $(document).ready(() => {
     game = new Game();
     $("#play").click(() => {
-        game.startAuto();
+        game.start();
     });
     $("#trails").click(() => {
     });
@@ -191,7 +237,8 @@ $(document).ready(() => {
             }
         });
         console.log("selectedWidget: "+selectedWidget);
-        game.select(selectedWidget);
+        //game.select(selectedWidget);
+        game.handleHit(selectedWidget);
     });
     $("#myCanvas").mouseup(e => { mouseDown = false; });
     $("#myCanvas").mousemove(e => {
@@ -202,11 +249,11 @@ $(document).ready(() => {
             return;
         var mp = relativePos(e);
         //console.log("x y: "+mp.x+" "+mp.y);
-        w.selected = true;
+        //w.selected = true;
         //w.adjust(selectedGrip, mp);
         game.clear();
     });
 
-    setInterval(() => game.update(), 1000/60);
+    setInterval(() => game.update(), 1000/30);
 });
 
