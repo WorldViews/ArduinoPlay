@@ -9,6 +9,7 @@
     "morgan": "^1.8.2",
     "socket.io": "^2.0.3",
     "johnny-five": "*",
+    "etherport-client": "*",
     "playground-io": "*"
   },
   "author": "",
