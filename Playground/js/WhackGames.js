@@ -1,6 +1,7 @@
 
 var t = 0;
 
+var role = "farmer";
 var mouseDown = false;
 var selectedWidget = null;
 var selectedGrip = null;
@@ -100,7 +101,6 @@ class Hole extends Widget {
         }
     }
 
-
     draw(c) {
         var ctx = c.getContext("2d");
         var x0 = this.x0, y0 = this.y0;
@@ -127,7 +127,11 @@ class Game {
         this.widgetsByName = {};
         this.createHoles(3,3);
         this.delay = 1000;
+        this.auto = false;
 	this.lingerTime = 2.5;
+        var inst = this;
+        this.portal = new MUSEPortal();
+        this.portal.registerMessageHandler(msg => inst.handleMessage(msg));
 	this.start();
     }
 
@@ -138,14 +142,24 @@ class Game {
 	this.farmerPoints = 0;
         this.handleTick();
     }
-    
 
     handleTick() {
-        console.log("tick");
+        if (role == "mole") {
+            this.handleTickAsMole();
+        }
+        else
+            this.handleTickAsFarmer();
+    }
+
+    handleTickAsMole() {
+    }
+    
+    handleTickAsFarmer() {
+        //console.log("tick");
         var inst = this;
 	var t = getClockTime();
 	var dt = t - this.lastMoveTime;
-	if (dt > this.lingerTime) {
+	if (dt > this.lingerTime && this.auto) {
 	    this.molePoints++;
 	    this.moveMoles();
 	}
@@ -154,12 +168,37 @@ class Game {
 
     moveMoles() {
 	console.log("move moles");
-	this.lastMoveTime = getClockTime();
 	var i = rand(this.widgets.length);
+        this.setMolePosition(i);
+    }
+
+    setMolePosition(i)
+    {
+	console.log("setMolePosition "+i);
+	this.lastMoveTime = getClockTime();
 	this.widgets.forEach(w => w.setOccupied(false));
 	this.widgets[i].setOccupied(true);
     }
 
+    sendMessage(msg) {
+        console.log("sendMessage "+JSON.stringify(msg));
+        this.portal.sendMessage(msg);
+    }
+    
+    handleMessage(msg) {
+        console.log("handleMessage "+JSON.stringify(msg));
+        if (msg.msgType == "whack.setMolePos") {
+            this.setMolePosition(msg.index);
+        }
+        else if (msg.msgType == "whack.hitHole") {
+            console.log("hitHole: "+msg.index);
+            this.handleHitAsFarmer(this.widgets[msg.index]);
+        }
+        else {
+            console.log("unexpected message "+JSON.stringify(msg));
+        }
+    }
+    
     createHoles(n,m) {
         this.widgets = [];
         this.widgetsByName = {};
@@ -167,12 +206,15 @@ class Game {
         var top = 100;
         var wd = 100;
         var ht = 100;
+        var idx = 0;
         for (var i=0; i<n; i++) {
             for (var j=0; j<n; j++) {
                 name = "cell_"+i+"_"+j;
                 var x0 = left + i*wd;
                 var y0 = top +  j*ht;
-                this.addWidget(new Hole({x0, y0, name}));
+                var hole = new Hole({x0, y0, name});
+                hole.idx = idx++;
+                this.addWidget(hole);
             }
         }
     }
@@ -197,12 +239,33 @@ class Game {
     }
 
     handleHit(w) {
+        if (w == null)
+            return;
+        if (role == "mole")
+            this.handleHitAsMole(w);
+        else
+            this.handleHitAsFarmer(w);
+    }
+    
+    handleHitAsFarmer(w) {
+        console.log("handleHitAsFarmer", w);
+        if (role == "farmer")
+            this.sendMessage({'msgType': 'whack.hitHole', 'index': w.idx});
 	if (w.occupied) {
 	    this.farmerPoints++;
+            w.setOccupied(false);
 	    //this.molePoints--;
-	    this.moveMoles();
+            if (this.auto)
+	        this.moveMoles();
 	}
     }
+
+    handleHitAsMole(w) {
+        console.log("handleHitAsMole", w);
+        this.setMolePosition(w.idx);
+        this.sendMessage({'msgType': 'whack.setMolePos', 'index': w.idx});
+    }
+
     
     update() {
         t += this.dt;
@@ -219,6 +282,12 @@ var game = null;
 
 $(document).ready(() => {
     game = new Game();
+    if (role == "mole") {
+        $("#banner").html("You are the mole - choose your holes well!");
+    }
+    else {
+        $("#banner").html("You are the gardner - whack that mole!");
+    }
     $("#play").click(() => {
         game.start();
     });
@@ -248,9 +317,6 @@ $(document).ready(() => {
         if (w == null)
             return;
         var mp = relativePos(e);
-        //console.log("x y: "+mp.x+" "+mp.y);
-        //w.selected = true;
-        //w.adjust(selectedGrip, mp);
         game.clear();
     });
 
