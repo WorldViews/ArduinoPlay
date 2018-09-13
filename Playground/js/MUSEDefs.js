@@ -20,6 +20,7 @@ MUSE.museServer = "sasaki:4000";
 class MUSEPortal
 {
     constructor(name) {
+        this.channel = "MUSE.IOT";
         this.name = name || "client_"+document.location.host;
         this.server = MUSE.museServer;
         this.sock = io.connect(this.server);
@@ -27,8 +28,12 @@ class MUSEPortal
         MUSE.portal = this;
     }
 
+    registerMessageHandler(handler) {
+        this.sock.on(this.channel, msg => handler(msg));
+    }
+
     sendMessage(msg, channel) {
-        channel = channel || "MUSE.IOT";
+        channel = channel || this.channel;
         this.sock.emit(channel, msg);
     }
 }
