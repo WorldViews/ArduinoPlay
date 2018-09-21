@@ -2,9 +2,6 @@
 var t = 0;
 
 var role = "farmer";
-var mouseDown = false;
-var selectedWidget = null;
-var selectedGrip = null;
 var showTrails = true;
 
 function rand(n)
@@ -59,11 +56,6 @@ class Widget {
         this.name = opts.name;
         this.selected = false;
     }
-    
-    clear()
-    {
-        this.trail = [];
-    }
 }
 
 class Hole extends Widget {
@@ -104,7 +96,6 @@ class Hole extends Widget {
     draw(c) {
         var ctx = c.getContext("2d");
         var x0 = this.x0, y0 = this.y0;
-        var trail = this.trail;
         ctx.lineWidth = 1;
         ctx.strokeStyle = this.strokeStyle;
         ctx.fillStyle = this.fillStyle;
@@ -124,6 +115,7 @@ class Game {
     constructor(canvName) {
         this.canvName = canvName || "myCanvas";
         this.widgets = [];
+        this.mouseDown = false;
         this.widgetsByName = {};
         this.createHoles(3,3);
         this.delay = 1000;
@@ -133,6 +125,8 @@ class Game {
         this.portal = new MUSEPortal();
         this.portal.registerMessageHandler(msg => inst.handleMessage(msg));
 	this.start();
+        var str = "server: "+this.portal.server;
+        $("#debug").html(str);
     }
 
     start() {
@@ -181,18 +175,22 @@ class Game {
     }
 
     sendMessage(msg) {
-        console.log("sendMessage "+JSON.stringify(msg));
+        //console.log("sendMessage "+JSON.stringify(msg));
         this.portal.sendMessage(msg);
     }
     
     handleMessage(msg) {
-        console.log("handleMessage "+JSON.stringify(msg));
+        //console.log("handleMessage "+JSON.stringify(msg));
         if (msg.msgType == "whack.setMolePos") {
             this.setMolePosition(msg.index);
         }
         else if (msg.msgType == "whack.hitHole") {
             console.log("hitHole: "+msg.index);
             this.handleHitAsFarmer(this.widgets[msg.index]);
+        }
+        else if (msg.msgType == "whack.mousePos") {
+            var pt = msg.pt;
+            this.otherMousePt = pt;
         }
         else {
             console.log("unexpected message "+JSON.stringify(msg));
@@ -228,6 +226,13 @@ class Game {
         var ctx = c.getContext("2d");
         ctx.clearRect(0,0,c.width, c.height);
         this.widgets.forEach(w => w.draw(c));
+        if (this.otherMousePt) {
+            var mp = this.otherMousePt;
+            ctx.beginPath();
+            // Draw drivepoint path
+            ctx.arc(mp.x, mp.y, 4, 0, 2 * Math.PI);
+            ctx.stroke();
+        }
     }
     
     clear() {
@@ -236,6 +241,17 @@ class Game {
 
     select(sw) {
         this.widgets.forEach(w => {w.selected = (w == sw)});true;
+    }
+
+    findWidget(pt) {
+        var widget = null;
+        game.widgets.forEach(w => {
+            var grip = w.findGrip(pt);
+            if (grip != null) {
+                widget = w;
+            }
+        });
+        return widget;
     }
 
     handleHit(w) {
@@ -291,33 +307,18 @@ $(document).ready(() => {
     $("#play").click(() => {
         game.start();
     });
-    $("#trails").click(() => {
-    });
-    $("#delete").click(() => {
-    });
     $("#myCanvas").mousedown(e => {
-        var mp = relativePos(e);
-        mouseDown = true;
-        selectedWidget = null;
-        game.widgets.forEach(w => {
-            var grip = w.findGrip(mp);
-            if (grip != null) {
-                selectedWidget = w;
-            }
-        });
-        console.log("selectedWidget: "+selectedWidget);
-        //game.select(selectedWidget);
-        game.handleHit(selectedWidget);
+        game.mouseDown = true;
+        var pt = relativePos(e);
+        var widget = game.findWidget(pt);
+        console.log("selected widget: "+widget);
+        game.handleHit(widget);
     });
-    $("#myCanvas").mouseup(e => { mouseDown = false; });
+    $("#myCanvas").mouseup(e => { game.mouseDown = false; });
     $("#myCanvas").mousemove(e => {
-        if (!mouseDown)
-            return;
-        var w = selectedWidget;
-        if (w == null)
-            return;
-        var mp = relativePos(e);
-        game.clear();
+        var pt = relativePos(e);
+        var msg = {'msgType': 'whack.mousePos', role, pt};
+        game.sendMessage(msg);
     });
 
     setInterval(() => game.update(), 1000/30);

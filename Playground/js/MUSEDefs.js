@@ -20,9 +20,10 @@ MUSE.museServer = "sasaki:4000";
 class MUSEPortal
 {
     constructor(name) {
+        var server = MUSE.getParameterByName("museServer");
         this.channel = "MUSE.IOT";
         this.name = name || "client_"+document.location.host;
-        this.server = MUSE.museServer;
+        this.server = server || MUSE.museServer;
         this.sock = io.connect(this.server);
         this.sendMessage({'msgType': 'init', 'client': this.name});
         MUSE.portal = this;
