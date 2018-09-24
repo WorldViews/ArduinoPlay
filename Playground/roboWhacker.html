@@ -19,8 +19,43 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
     <script src="js/MUSEDefs.js"></script>
     <script src="js/RoboWhacker.js"></script>
+	<script type="text/javascript" src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+	<script type="text/javascript" src="http://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
     <script>
         role = "mole";
+		var ros = new ROSLIB.Ros({
+			url : 'ws://192.168.16.177:9090'
+		  });
+
+		  ros.on('connection', function() {
+			console.log('Connected to websocket server.');
+		  });
+
+		  ros.on('error', function(error) {
+			console.log('Error connecting to websocket server: ', error);
+		  });
+
+		  ros.on('close', function() {
+			console.log('Connection to websocket server closed.');
+		  });
+
+		var cmdVel = new ROSLIB.Topic({
+		ros : ros,
+		name : '/hit_num',
+		messageType : 'std_msgs/Int32'
+	  });
+
+	  var cur_pos = new ROSLIB.Topic({
+		ros : ros,
+		name : '/joint_states',
+		messageType : 'sensor_msgs/JointState'
+	  });
+
+	  cur_pos.subscribe(function(message) {
+		//console.log('Received message on ' + JSON.stringify(message));
+		console.log('Received message on ' + JSON.stringify(message.position));
+		//cur_pos.unsubscribe();
+	  });
     </script>
   </body>
 </html>

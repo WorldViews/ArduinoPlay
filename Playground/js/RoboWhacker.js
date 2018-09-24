@@ -63,6 +63,15 @@ class Whacker {
     handleHit(idx) {
         console.log("handleHit", idx);
         $("#requestedHole").html("hit hole "+idx);
+		
+		
+		
+		var num = new ROSLIB.Message({
+		  data : idx
+		});
+
+		cmdVel.publish(num);
+		console.log('sending robot to ' + num)
     }
 
     setMolePosition(idx) {
