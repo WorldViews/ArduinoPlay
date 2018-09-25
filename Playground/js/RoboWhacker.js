@@ -1,5 +1,19 @@
 
 var t = 0;
+var ros;
+var hit_pos;
+
+positions = [
+    {x: 0.0,   y: 0},
+    {x: 0.05,  y: 0},
+    {x: 0.1,   y: 0},
+    {x: 0.0,   y: 0.05},
+    {x: 0.05,  y: 0.05},
+    {x: 0.1,   y: 0.05},
+    {x: 0.0,   y: 0.1},
+    {x: 0.05,  y: 0.1},
+    {x: 0.1,   y: 0.1},
+];
 
 function rand(n)
 {
@@ -28,9 +42,67 @@ class Whacker {
         var inst = this;
         this.portal = new MUSEPortal();
         this.portal.registerMessageHandler(msg => inst.handleMessage(msg));
-	this.start();
+	    this.start();
         var str = "server: "+this.portal.server;
         $("#debug").html(str);
+
+		ros = new ROSLIB.Ros({
+			url : 'ws://192.168.16.177:9090'
+		  });
+
+		  ros.on('connection', function() {
+			console.log('Connected to websocket server.');
+		  });
+
+		  ros.on('error', function(error) {
+			console.log('Error connecting to websocket server: ', error);
+		  });
+
+		  ros.on('close', function() {
+			console.log('Connection to websocket server closed.');
+		  });
+
+        this.ros = ros;
+        /*
+		var cmdVel = new ROSLIB.Topic({
+		  ros : ros,
+		  name : '/hit_num',
+		  messageType : 'std_msgs/Int32'
+	    });
+        */
+
+      /*
+	  var cur_pos = new ROSLIB.Topic({
+		  ros : ros,
+		  name : '/joint_states',
+		  messageType : 'sensor_msgs/JointState'
+	  });
+
+	  cur_pos.subscribe(function(message) {
+		//console.log('Received message on ' + JSON.stringify(message));
+		console.log('Received message on ' + JSON.stringify(message.position));
+		//cur_pos.unsubscribe();
+	  });
+      */
+      hit_pos = new ROSLIB.Topic({
+        ros : ros,
+        name : '/hit_pos',
+        messageType : 'geometry_msgs/Vector3'
+      });
+      this.hit_pos = hit_pos;
+
+	  var cur_pos = new ROSLIB.Topic({
+        ros : ros,
+        name : '/joint_states',
+        messageType : 'sensor_msgs/JointState'
+        });
+
+        cur_pos.subscribe(function(message) {
+        //console.log('Received message on ' + JSON.stringify(message));
+        console.log('Received message on ' + JSON.stringify(message.position));
+        //cur_pos.unsubscribe();
+        });
+    
     }
 
     start() {
@@ -65,12 +137,17 @@ class Whacker {
         $("#requestedHole").html("hit hole "+idx);
 		
 		
-		
-		var num = new ROSLIB.Message({
-		  data : idx
-		});
+        var x = 10;
+        var y = 20;
+        var z = 0;
+        var pos = positions[idx];
+        var x = pos.x;
+        var y = pos.y;
+        var z = 0;
+        console.log("request hit at "+x+" "+y+" "+z);
+		var num = new ROSLIB.Message({x, y, z});
 
-		cmdVel.publish(num);
+		hit_pos.publish(num);
 		console.log('sending robot to ' + num)
     }
 
