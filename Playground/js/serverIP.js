@@ -5,47 +5,11 @@ var port = "3000";
 var addr = "0.0.0.0";
 var SerialPort = require("serialport");
 var { EtherPortClient } = require('etherport-client');
-var comPortPath = "com3";
-var comPort = null;
 var etherPortClient = null;
-/*
-// This next bit of code is attempt to find the device ID
-// (i.e. which unique arduino board we are talking to.)
-// unfortunatley it only finds a plug-n-play id that is not
-// unique to the device.  Maybe this needs to come from an
-// id burned into the firmware.
-//
-var deviceId = null;
-var deviceName = null;
+var comPortPath = null;
+var comPort = null;
 
-var DEVICES = {
-    "USB\\VID_239A&PID_8011&MI_00\\6&31E90419&0&0000": "Train 1",
-};
-
-function findDevice() {
-    SerialPort.list((err,results) => {
-        if (err) {
-            console.log("**** Unable list list ports");
-            return;
-        }
-        console.log("------------------------------");
-        console.log("COM Ports:");
-        results.forEach(spec => {
-            console.log(spec);
-            var comName = spec.comName;
-            if (comName.toLowerCase() == comPortPath.toLowerCase()) {
-                deviceId = spec.pnpId;
-                deviceName = DEVICES[deviceId];
-            }
-        });
-        console.log("*** deviceId: "+deviceId);
-        console.log("*** deviceName: "+deviceName);
-        console.log("------------------------------");
-    });
-}
-*/
-
-console.log("***** Running server2.js ****");
+console.log("***** Running serverIP.js ****");
 console.log("argv:", argv);
 if (argv.length > 2)
     comPortPath = argv[2];
@@ -59,20 +23,23 @@ var five = require("johnny-five");
 var sock = null;
 var activeSockets = [];
 var light = null;
-var led = null;
+var led0 = null;
+var led2 = null;
 var servo = null;
 //var board = new five.Board();
 var board = null;
 var pins = {
     0: null,
     1: null,
-    2: null,
+//    2: null,
     3: null,
     6: null,
     10: null,
     11: null,
 //    "A9": null,
 };
+
+pins = {};
 
 var pinModes = {
 //    2: five.Pin.INPUT,
@@ -184,6 +151,14 @@ function setupBoard(comPortPath) {
             port: 3030
         });
         comPort = etherPortClient;
+        comPort.isOpen = false;
+        comPort.on('error', err => {
+            console.log("******* ERROR ******", err);
+        });
+        comPort.on('close', () => {
+            console.log("******* CLOSE ******");
+            comPort.isOpen = false;
+        });
     }
     else {
         comPort = new SerialPort(comPortPath,
@@ -222,8 +197,17 @@ function setupBoard(comPortPath) {
         });
     }
 
+    board.on("timeout", () => {
+        console.log("**** board timeout ****");
+    });
+
+    board.on("error", () => {
+        console.log("**** board error ****");
+    });
+    
     board.on("ready", function() {
         console.log("**** board ready - ****");
+        comPort.isOpen = true;
         //console.log(board);
         //console.log("comPort:", comPort);
         setupInProgress = false;
@@ -231,10 +215,12 @@ function setupBoard(comPortPath) {
             console.log("aborting board initialization - com port not open");
             return;
         }
-        console.log("Getting led pin 13 for this board");
-        led = new five.Led({pin: 13, board: board});
-        console.log("Getting servo for this board");
-        servo = new five.Servo({pin: 12, board: board});
+        console.log("Getting led pin 0 for this board");
+        led0 = new five.Led({pin: 0, board: board});
+        console.log("Getting led pin 2 for this board");
+        led2 = new five.Led({pin: 2, board: board});
+        //console.log("Getting servo for this board");
+        //servo = new five.Servo({pin: 12, board: board});
         for (var pinName in pins) {
             console.log("Creating pin "+pinName);
             var pin = new five.Pin({pin: pinName,
@@ -254,25 +240,7 @@ function setupBoard(comPortPath) {
             });
             */
         }
-//        light = new five.Light({pin: 5, type: "analog", board: board});
-//        led.blink(1000);
-        //console.log("Pin:", pin);
     
-//        var accelerometer = new five.Accelerometer({
-//            controller: Playground.Accelerometer,
-//            board: board
-//        });
-/*
-        accelerometer.on("change", (data) => {
-            //console.log("acc data: "+JSON.stringify(data));
-            //console.log("acc data: "+data.x+" "+data.y+" "+data.z);
-            //console.log("sending acc.change "+data.x+" "+data.y+" "+data.z);
-            var acc = {x: data.x, y: data.y, z: data.z};
-            //sock.emit("acc.change", data.x+" "+data.y+" "+data.z);
-            sendMessage("acc.change", acc);
-            //piezo.frequency(data.double ? 1500 : 500, 50);
-        });
-*/
         if (light) {
             light.on("change", (data) => {
                 //console.log("light: "+JSON.stringify(data));
@@ -294,10 +262,31 @@ function setupBoard(comPortPath) {
 
 var tickCount = 0;
 
+function setLed(name, led, val)
+{
+    if (led == null)
+        return;
+    if (val) {
+        console.log("led on "+name);
+        led.on();
+        led.brightness(255);
+    }
+    else {
+        console.log("led off "+name);
+        led.off();
+        led.brightness(0);
+    }
+}
+
 function heartbeat() {
     tickCount++;
+//    if (tickCount && (tickCount % 20) == 0) {
+//        console.log("comPort:\n", comPort);
+//    }
     var status = (comPort && comPort.isOpen) ? "open" : "closed";
     console.log("tick... "+tickCount+" "+port+" "+comPortPath+" "+status);
+    setLed("0", led0, tickCount % 2 == 0);
+    setLed("2", led2, tickCount % 3 == 0);
     if (sock) {
         msg = {type: 'status', portPath: comPortPath,
                //deviceId: deviceId,
@@ -375,8 +364,6 @@ function requestStatus(msg)
 }
 
 
-//findDevice();
-
 setupBoard(comPortPath);
 
 //var io = require("socket.io")(server);
@@ -388,7 +375,6 @@ io.on("connection", function(socket) {
     console.log("activeSOckets: " + activeSockets.length);
     socket.on("change:interval", function(data) {
         console.log("data: "+data);
-        led.blink(data);
     });
     socket.on("servo.set", function(data) {
         //console.log("servo value: "+data);
@@ -408,4 +394,4 @@ io.on("connection", function(socket) {
 
 console.log("listening on "+addr+" port: "+port);
 server.listen(port, addr);
-setInterval(heartbeat, 2000);
+setInterval(heartbeat, 500);

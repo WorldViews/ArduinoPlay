@@ -8,6 +8,7 @@
     "express": "^4.15.3",
     "morgan": "^1.8.2",
     "socket.io": "^2.0.3",
+    "socket.io-client": "^2.0.3",
     "johnny-five": "*",
     "etherport-client": "*",
     "playground-io": "*"

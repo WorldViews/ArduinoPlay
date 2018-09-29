@@ -12,20 +12,34 @@ const board = new five.Board({
   repl: false
 });
 
-const LED_PIN = 2;
 
 board.on('ready', () => {
-  board.pinMode(LED_PIN, five.Pin.OUTPUT);
+    console.log("board ready");
+    board.pinMode(0, five.Pin.OUTPUT);
+//    board.pinMode(0, five.Pin.INPUT);
+    //board.pinMode(2, five.Pin.OUTPUT);
+    board.pinMode(2, five.Pin.INPUT);
   // the Led class was acting hinky, so just using Pin here
-  const pin = five.Pin(LED_PIN);
-  let value = 0;
-  setInterval(() => {
-    if (value) {
-      pin.high();
-      value = 0;
-    } else {
-      pin.low();
-      value = 1;
-    }
-  }, 500);
+    const pin0 = new five.Pin(0);
+    const pin2 = new five.Pin(2);
+    pin0.on("data", (data) => {
+        console.log("pin0 data: "+data);
+    });
+    pin0.on("high", (data) => {
+        console.log("pin0 high");
+    });
+    pin0.on("low", (data) => {
+        console.log("pin0 low");
+    });
+    pin0.read((err,val) => {
+        console.log("read pin0 val "+val);
+    });
+    let value = 0;
+    setInterval(() => {
+        console.log("tick");
+        value++;
+        //pin0.write(value % 2 == 0 ? 0 : 1);
+        pin2.write(value % 3 == 0 ? 0 : 1);
+    }, 1000);
 });
+
