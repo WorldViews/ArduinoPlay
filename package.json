@@ -5,13 +5,14 @@
   "dependencies": {
     "body-parser": "^1.17.2",
     "cors": "^2.8.4",
-    "express": "^4.15.3",
-    "morgan": "^1.8.2",
-    "socket.io": "^2.0.3",
-    "socket.io-client": "^2.0.3",
-    "johnny-five": "*",
     "etherport-client": "*",
-    "playground-io": "*"
+    "express": "^4.15.3",
+    "johnny-five": "*",
+    "morgan": "^1.8.2",
+    "npm": "^6.4.1",
+    "playground-io": "*",
+    "socket.io": "^2.0.3",
+    "socket.io-client": "^2.0.3"
   },
   "author": "",
   "license": "ISC"
