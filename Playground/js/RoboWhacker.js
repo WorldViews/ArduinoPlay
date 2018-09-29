@@ -2,17 +2,20 @@
 var t = 0;
 var ros;
 var hit_pos;
-
+var x0 = 0.15;
+var y0 = -0.02;
+var dx = 0.02;
+var dy = 0.02;
 positions = [
-    {x: 0.0,   y: 0},
-    {x: 0.05,  y: 0},
-    {x: 0.1,   y: 0},
-    {x: 0.0,   y: 0.05},
-    {x: 0.05,  y: 0.05},
-    {x: 0.1,   y: 0.05},
-    {x: 0.0,   y: 0.1},
-    {x: 0.05,  y: 0.1},
-    {x: 0.1,   y: 0.1},
+    {x: 0.12,   y: -0.05},
+    {x: 0.14,  y:  -0.05},
+    {x: 0.16,   y:  -0.05},
+    {x: 0.12,   y: 0},
+    {x: 0.14,  y: 0},
+    {x: 0.16,   y: 0},
+   	{x: 0.12,   y:  0.05},
+    {x: 0.14,  y: 0.05},
+    {x: 0.16,   y: 0.05},
 ];
 
 function rand(n)
@@ -99,7 +102,9 @@ class Whacker {
 
         cur_pos.subscribe(function(message) {
         //console.log('Received message on ' + JSON.stringify(message));
-        console.log('Received message on ' + JSON.stringify(message.position));
+		var str = JSON.stringify(message.position);
+        console.log('Received message on ' + str);
+		$("#status").html(str)
         //cur_pos.unsubscribe();
         });
     
@@ -136,14 +141,20 @@ class Whacker {
         console.log("handleHit", idx);
         $("#requestedHole").html("hit hole "+idx);
 		
-		
+		var i = Math.floor(idx/3);
+		var j = idx % 3;
+		console.log("i: "+i+" j: "+j);
+		var x = x0 + dx * i;
+		var y = y0 + dy * j;
+		/*
         var x = 10;
         var y = 20;
         var z = 0;
         var pos = positions[idx];
         var x = pos.x;
         var y = pos.y;
-        var z = 0;
+		*/
+        var z = 0.02;
         console.log("request hit at "+x+" "+y+" "+z);
 		var num = new ROSLIB.Message({x, y, z});
 
