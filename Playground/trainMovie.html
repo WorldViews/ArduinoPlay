@@ -25,9 +25,14 @@ var SCRIPT = [
      action: () => { console.log("start");
        let imageUrl = "/video/KitchenTrain/KitchenDemo1.mp4";
        console.log("imageUrl: "+imageUrl);
-                     pClient.setVideo(imageUrl);
-                     pClient.setPlayTime(0);
-                     pClient.play();
+       var msg = {type: 'pano.control',
+                   //videoType: 'VIDEO',
+                   imageUrl: imageUrl,
+       };
+       pClient.sendMessage(msg);
+       //pClient.setVideo(imageUrl);
+       pClient.setPlayTime(0);
+       pClient.play();
      }
     },
     {t: 24.8, action: () => { trains.moveForward(DEMO_TRAIN); }},
