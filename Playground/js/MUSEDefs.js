@@ -6,6 +6,10 @@ var MUSE = {};
 //}
 
 MUSE.getParameterByName = function(name) {
+    if (typeof window === 'undefined') {
+        console.log("***** getParameterByName called outside of browser...");
+        return null;
+    }
     var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
     return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
 }
@@ -25,22 +29,25 @@ MUSE.museServer = "sasaki:4000";
 class MUSEPortal
 {
     constructor(name, server) {
+        console.log("creating MUSEPortal "+name+" "+server);
         let inst = this;
+        let host;
         if (typeof document !== 'undefined') {
-            server = MUSE.getParameterByName("museServer");
-            name = name || "client_"+document.location.host;
+            server = server || MUSE.getParameterByName("museServer");
+            host = document.location.host;
         }
         else {
-            name = name || "client_"+require('os').hostname();
+            host = require('os').hostname();
         }
+        name = name || "unknown";
+        name = name + "_"+ host;
+        this.name = name;
         this.channel = "MUSE.IOT";
-        this.name = name || "unknown";
         this.server = server || MUSE.museServer;
         if (typeof io === 'undefined') {
-            //io = require("socket.io-client")(this.server);
             console.log("getting socket.io-client via require...");
-            //this.sock = require("socket.io-client")(this.server);
-            this.sock = require("socket.io-client")("http://"+this.server);
+            var io = require("socket.io-client");
+            this.sock = io("http://"+this.server);
         }
         else {
             this.sock = io.connect(this.server);
@@ -52,6 +59,12 @@ class MUSEPortal
             console.log("socket is connected");
             console.log("sock.connected ", inst.sock.connected);
         });
+        setInterval(() => inst.sendHeartbeat(), 2000);
+    }
+
+    sendHeartbeat() {
+        let msg = {msgType: 'heartbeat', client: this.name};
+        this.sendMessage(msg);
     }
 
     registerMessageHandler(handler) {
@@ -66,9 +79,10 @@ class MUSEPortal
 }
 
 
-MUSE.getPortal = function() {
+MUSE.getPortal = function(name, server) {
+    console.log("getPortal "+name+" "+server);
     if (!MUSE.portal)
-        MUSE.portal = new MUSEPortal();
+        MUSE.portal = new MUSEPortal(name, server);
     return MUSE.portal;
 }
 

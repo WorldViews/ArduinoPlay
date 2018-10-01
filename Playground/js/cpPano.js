@@ -5,7 +5,7 @@ var Harness = require("./MUSEArduino.js").Harness;
 const five = require('johnny-five');
 const Playground = require("playground-io");
 
-var portal = MUSE.getPortal();
+var portal = MUSE.getPortal("cpPanoPortal");
 console.log("MUSE server "+portal.server);
 
 var board = null;

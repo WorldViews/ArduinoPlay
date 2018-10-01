@@ -4,8 +4,8 @@ var MUSE = require("./MUSEDefs.js").MUSE;
 const five = require('johnny-five');
 const Playground = require("playground-io");
 
-var portal = MUSE.getPortal();
-console.log("MUSE server "+portal.server);
+//var portal = MUSE.getPortal();
+//console.log("MUSE server "+portal.server);
 
 var argv = process.argv;
 var SerialPort = require("serialport");
@@ -19,6 +19,7 @@ class Harness {
         this.tickCount = 0;
         comPortPath = opts.comPortPath || "com4";
         this.onBoardReady = opts.onBoardReady;
+        this.portal = opts.portal;
     }
 
     start() {
@@ -32,10 +33,10 @@ class Harness {
         var open = comPort && comPort.isOpen;
         var status = open ? "open" : "closed";
         console.log("tick... "+this.tickCount+" "+comPortPath+" "+status);
-        if (portal) {
+        if (this.portal) {
             var msg = {type: 'status', portPath: comPortPath,
                        haveBoard: open};
-            portal.sendMessage(msg);
+            this.portal.sendMessage(msg);
         }
         if (!open) {
             if (!setupInProgress) {

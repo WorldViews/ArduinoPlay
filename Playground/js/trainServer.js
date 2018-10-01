@@ -5,9 +5,6 @@ var Harness = require("./MUSEArduino.js").Harness;
 const five = require('johnny-five');
 const Playground = require("playground-io");
 
-var portal = MUSE.getPortal();
-console.log("MUSE server "+portal.server);
-
 
 var TUNNEL = "TUNNEL";
 
@@ -237,11 +234,11 @@ class TrainServer {
 
     updateStatus() {
     }
-    
 }
 
 var trainName = "train1";
 var comPortPath = "com3";
+var museServer = null;
 
 var argv = process.argv;
 console.log("argv:", argv);
@@ -249,11 +246,19 @@ if (argv.length > 2)
     trainName = argv[2];
 if (argv.length > 3)
     comPortPath = argv[3];
+if (argv.length > 4)
+    museServer = argv[4];
+
+var portal = MUSE.getPortal("trainServer", museServer);
+console.log("MUSE server "+portal.server);
+
+
 console.log("-----------------------------");
 console.log("train: "+trainName);
 var ts = new TrainServer(trainName, portal);
 var harness = new Harness({
     onBoardReady: (board) => ts.onBoardReady(board),
-    comPortPath: comPortPath
+    comPortPath,
+    portal
 });
 harness.start();
