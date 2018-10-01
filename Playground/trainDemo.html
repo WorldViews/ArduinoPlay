@@ -20,7 +20,7 @@ var scriptStartTime = 0;
 var scriptRunSpeed = 0;
 var DEMO_TRAIN = "train2";
 
-var SCRIPT = [
+var PAL_SCRIPT = [
     {t: 0,
      action: () => { console.log("start");
        let imageUrl = "/video/KitchenTrain/KitchenDemo1.mp4";
@@ -41,6 +41,27 @@ var SCRIPT = [
     {t: 40,   action: () => { trains.moveReverse(DEMO_TRAIN); }},
 ];
 
+var RT_SCRIPT = [
+    {t: 0,
+     action: () => { console.log("start");
+       let imageUrl = "/video/ReachAndTeach2/train1.mp4";
+       console.log("imageUrl: "+imageUrl);
+       var msg = {type: 'pano.control',
+                   //videoType: 'VIDEO',
+                   imageUrl: imageUrl,
+       };
+       pClient.sendMessage(msg);
+       //pClient.setVideo(imageUrl);
+       pClient.setPlayTime(0);
+       pClient.play();
+     }
+    },
+    {t: 34, action: () => { trains.moveForward(DEMO_TRAIN); }},
+    {t: 38, action: () => { trains.stop(DEMO_TRAIN); }},
+    {t: 39, action: () => { pClient.pause(); }},
+    {t: 40, action: () => { trains.moveReverse(DEMO_TRAIN); }},
+];
+
 SCRIPT_TIMERS = [];
 
 function handleStep(step)
@@ -58,11 +79,12 @@ function showScriptTime()
 
 function runScript(script)
 {
+    stopScript();
     script = script || SCRIPT;
     scriptStartTime = getClockTime();
     scriptRunSpeed = 1;
     console.log("runScript");
-    SCRIPT.forEach(step => {
+    script.forEach(step => {
         //SCRIPT_TIMERS.push(setTimeout(step.action, step.t*1000));
         SCRIPT_TIMERS.push(setTimeout(() => handleStep(step), step.t*1000));
     });
@@ -93,7 +115,8 @@ function setupMovieUI() {
       console.log("stop");
       pClient.pause();
    });
-   $("#RunScript").click( e => runScript() );
+   $("#RunPALScript").click( e => runScript(PAL_SCRIPT) );
+   $("#RunRTScript").click( e => runScript(RT_SCRIPT) );
    $("#StopScript").click(  e => stopScript() );
 }
 
@@ -117,7 +140,9 @@ function setupMovieUI() {
 </head>
 <body>
 <h3>Overall Script</h3>
-<input id="RunScript" type="Button" value="Run">
+<input id="RunPALScript" type="Button" value="PAL">
+&nbsp;&nbsp;
+<input id="RunRTScript" type="Button" value="Store">
 &nbsp;&nbsp;
 <input id="StopScript" type="Button" value="Stop">
 &nbsp;&nbsp;
