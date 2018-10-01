@@ -157,10 +157,10 @@ class TrainServer {
         led = new five.Led({pin: 13, board: board});
         light = new five.Light({pin: 5, type: "analog", board: board});
         led.blink(1000);
-//        board.pinMode(0, five.Pin.INPUT);
-//        board.pinMode(2, five.Pin.INPUT);
-//        board.pinMode(3, five.Pin.INPUT);
-//        board.pinMode(6, five.Pin.INPUT);
+        board.pinMode(0, five.Pin.OUTPUT);
+        board.pinMode(2, five.Pin.INPUT);
+        board.pinMode(3, five.Pin.INPUT);
+        board.pinMode(6, five.Pin.INPUT);
         pin0 = new five.Pin(0);
         pin2 = new five.Pin(2);
         pin3 = new five.Pin(3);
