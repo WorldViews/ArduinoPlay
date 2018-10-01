@@ -3,10 +3,14 @@
 <head>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+  <script>
+console.log("io: "+io);
+  </script>
   <script src="js/MUSEDefs.js"></script>
   <script src="js/TrainControl.js"></script>
   <script src="js/sprintf.js"></script>
   <script>
+console.log("io: "+io);
     var server = MUSE.getParameterByName("server");
     var trainName = MUSE.getParameterByName("train");
     if (!server)
@@ -16,6 +20,7 @@
     var musePortal = null;
     console.log("server: "+server);
     $(function() {
+console.log("in start io: "+io);
       musePortal = MUSE.getPortal();
       $("#server").html(server);
       //var socket = io.connect("http://localhost:3000");

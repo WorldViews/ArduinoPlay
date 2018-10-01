@@ -25,7 +25,7 @@ class Harness {
     start() {
         let inst = this;
         this.setupBoard(comPortPath);
-        setInterval(() => inst.heartbeat(), 2000);
+        setInterval(() => inst.heartbeat(), 3500);
     }
 
     heartbeat() {

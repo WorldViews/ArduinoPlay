@@ -5,6 +5,20 @@ var MUSE = {};
 //    io = require("socket.io-client");
 //}
 
+function isServer() {
+   return ! (typeof window != 'undefined' && window.document);
+}
+
+function isBrowser() {
+   return !isServer();
+}
+
+if (isBrowser()) {
+    console.log("Adding window to global namespace with name global");
+    var global = window
+}
+
+
 MUSE.getParameterByName = function(name) {
     if (typeof window === 'undefined') {
         console.log("***** getParameterByName called outside of browser...");
@@ -44,9 +58,9 @@ class MUSEPortal
         this.name = name;
         this.channel = "MUSE.IOT";
         this.server = server || MUSE.museServer;
-        if (typeof io === 'undefined') {
+        if (isServer()) {
             console.log("getting socket.io-client via require...");
-            var io = require("socket.io-client");
+            let io = require("socket.io-client");
             this.sock = io("http://"+this.server);
         }
         else {

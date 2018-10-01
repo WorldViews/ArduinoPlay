@@ -14,7 +14,7 @@
     var portal = null;
     var trains = null;
     $(function() {
-      portal = MUSE.getPortal();
+      portal = MUSE.getPortal("trainSystemClient");
       trains = new TrainSystem(portal);
       //$("#server").html(server);
 
