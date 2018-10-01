@@ -43,5 +43,5 @@ function onBoardReady(board) {
     });
 }
 
-var harness = new Harness(onBoardReady);
+var harness = new Harness({onBoardReady});
 harness.start();

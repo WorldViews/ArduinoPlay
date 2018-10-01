@@ -14,10 +14,11 @@ var comPort = null;
 var setupInProgress = false;
 
 class Harness {
-    constructor(onBoardReady) {
+    constructor(opts) {
         var inst = this;
         this.tickCount = 0;
-        this.onBoardReady = onBoardReady;
+        comPortPath = opts.comPortPath || "com4";
+        this.onBoardReady = opts.onBoardReady;
     }
 
     start() {
