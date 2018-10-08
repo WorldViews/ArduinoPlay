@@ -5,7 +5,10 @@ var maxTrailPts = 300;
 var mouseDown = false;
 var selectedWidget = null;
 var selectedGrip = null;
-var showTrails = true;
+var showTrails = false;
+var showRanges = true;
+var model = null;
+
 
 function clone(obj) {
     return JSON.parse(JSON.stringify(obj));
@@ -57,8 +60,17 @@ class Widget {
         this.opts = opts;
         this.name = opts.name;
         this.trail = [];
+        this.range = [];
+        this.lastRangeUpdate = model.gen-1;
     }
     
+    update() {
+        if (this.lastRangeUpdate != model.gen) {
+            this.updateRange();
+            this.lastRangeUpdate = model.gen;
+        }
+    }
+
     clearTrail()
     {
         this.trail = [];
@@ -82,10 +94,22 @@ class SlipRod extends Widget {
         this.driver = opts.driver;
     }
 
-    
     update() {
+        super.update();
         this.pt1 = this.driver.pt2;
         this.pt2 = findEndPoint(this.px, this.py, this.L, this.pt1.x, this.pt1.y);
+    }
+
+    updateRange() {
+        console.log("updateRange");
+        this.range = [];
+        let domain = this.driver.range;
+        //console.log(this.name+".domain: ", domain);
+        this.driver.range.forEach(pt1 => {
+            let pt2 = findEndPoint(this.px, this.py, this.L, pt1.x, pt1.y);
+            this.range.push(pt2);
+        });
+        //console.log(this.name+".range", this.range);
     }
     
     findGrip(mp) {
@@ -108,12 +132,14 @@ class SlipRod extends Widget {
         else {
             console.log("Unexpected grip name "+grip);
         }
+        this.updateRange();
     }
 
     draw(c) {
         var ctx = c.getContext("2d");
         var trail = this.trail;
         ctx.lineWidth = 1;
+        ctx.strokeStyle = "#000000";
         // Draw anchor point
         ctx.beginPath();
         ctx.arc(this.px, this.py, 3, 0, 2 * Math.PI);
@@ -132,12 +158,19 @@ class SlipRod extends Widget {
             trail.push(this.pt2);
         // draw trail
         ctx.lineWidth = 0.5;
+        ctx.strokeStyle = "#000088";
         if (trail.length > maxTrailPts)
             trail = trail.slice(1);
         //console.log("trail: "+trail);
         ctx.beginPath();
         trail.forEach(pt => ctx.lineTo(pt.x,pt.y));
         ctx.stroke();
+        if (showRanges) {
+            var range = this.range;
+            ctx.beginPath();
+            range.forEach(pt => ctx.lineTo(pt.x,pt.y));
+            ctx.stroke();
+        }
     }
 }
 
@@ -148,6 +181,7 @@ class Crank extends Widget {
         this.R = opts.R || 20;
         this.x0 = opts.x0;
         this.y0 = opts.y0;
+        this.updateRange();
     }
 
     update() {
@@ -156,6 +190,19 @@ class Crank extends Widget {
             x: this.x0 + this.R*Math.cos(a),
             y: this.y0 + this.R*Math.sin(a)
         }
+    }
+
+    updateRange() {
+        console.log("updateRange "+this.name);
+        this.range = [];
+        let numPts = 200;
+        for (let i=0; i<=numPts; i++) {
+            let a = 2*Math.PI*i/numPts;
+            let x = this.x0 + this.R*Math.cos(a);
+            let y = this.y0 + this.R*Math.sin(a);
+            this.range.push({x,y});
+        }
+        //console.log("range."+this.name+" ",this.range);
     }
 
                 
@@ -180,6 +227,7 @@ class Crank extends Widget {
         else {
             console.log("Unexpected grip name "+grip);
         }
+        this.updateRange();
     }
 
     draw(c) {
@@ -202,9 +250,17 @@ class Crank extends Widget {
         if (trail.length > maxTrailPts)
             trail = trail.slice(1);
         //console.log("trail: "+trail);
-        ctx.beginPath();
-        trail.forEach(pt => ctx.lineTo(pt.x,pt.y));
-        ctx.stroke();
+        if (showTrails) {
+            ctx.beginPath();
+            trail.forEach(pt => ctx.lineTo(pt.x,pt.y));
+            ctx.stroke();
+        }
+        if (showRanges) {
+            var range = this.range;
+            ctx.beginPath();
+            range.forEach(pt => ctx.lineTo(pt.x,pt.y));
+            ctx.stroke();
+        }
     }
 }
 
@@ -215,6 +271,7 @@ class Model {
         this.widgetsByName = {};
         //this.loadDefault();
         this.dt = 0.03;
+        this.gen = 1;
     }
 
     load(specs) {
@@ -320,6 +377,7 @@ class Model {
             if (selectedGrip)
                 statusText += " "+selectedGrip;
         }
+        statusText += " g: "+this.gen;
         $("#status").html(statusText);
     }
 }
@@ -350,8 +408,6 @@ function toggleTrails()
         bt.val("trails");
     }
 }
-
-var model = null;
 
 $(document).ready(() => {
     model = new Model();
@@ -418,6 +474,7 @@ $(document).ready(() => {
         var mp = relativePos(e);
         //console.log("x y: "+mp.x+" "+mp.y);
         w.adjust(selectedGrip, mp);
+        model.gen++;
         model.clear();
     });
 
