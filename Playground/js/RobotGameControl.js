@@ -45,10 +45,24 @@ class RobotGame {
 		
 	}
     
+    example(body) {
+        //console.log("body: ", body);
+        let msg = body.msg;
+        console.log("body "+body.bodyNum+" "+body.id);
+        console.log("body msg: "+JSON.stringify(msg));
+        var lhpos = msg['LEFT_HAND'];
+        var lhconf = msg['LEFT_HAND_c'];
+        console.log("lhpos: "+lhpos+" conf: "+lhconf);
+        var lhpos = msg['LEFT_HAND'];
+        var lhconf = msg['LEFT_HAND_c'];
+        console.log("lhpos: "+lhpos+" conf: "+lhconf);
+        console.log("body msg: "+JSON.stringify(msg));
+    }
+
     handleKinUpdate(kinWatch) {
         for (var bodyId in kinWatch.bodies) {
             var body = kinWatch.bodies[bodyId];
-            //console.log("body: "+body);
+            this.example(body);
             if (body.RIGHT_UP.getState()) {
                 this.handleHand(body, "RIGHT_HAND");
             }

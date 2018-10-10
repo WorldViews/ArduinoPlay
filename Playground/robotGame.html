@@ -56,7 +56,9 @@ function getParameterByName(name) {
     return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
 }
 
-var kinectURL = "http://platonia:4000";
+//var kinectURL = "http://platonia:4000";
+var kinectURL = "http://sasaki:4000";
+//var kinectURL = "http://platonia";
 //var kinectURL = document.location.host;
 var kinectServerName = getParameterByName("kinectServer");
 if (kinectServerName) {
