@@ -1,14 +1,6 @@
 
-var t = 0;
 
-var maxTrailPts = 300;
-var mouseDown = false;
-var selectedWidget = null;
-var selectedGrip = null;
-var showTrails = false;
-var showRanges = true;
 var model = null;
-
 
 function clone(obj) {
     return JSON.parse(JSON.stringify(obj));
@@ -97,7 +89,8 @@ class SlipRod extends Widget {
     update() {
         super.update();
         this.pt1 = this.driver.pt2;
-        this.pt2 = findEndPoint(this.px, this.py, this.L, this.pt1.x, this.pt1.y);
+        this.pt2 = findEndPoint(this.px, this.py, this.L,
+                                this.pt1.x, this.pt1.y);
     }
 
     updateRange() {
@@ -111,17 +104,19 @@ class SlipRod extends Widget {
         });
         //console.log(this.name+".range", this.range);
     }
-    
+
     findGrip(mp) {
-        if (dist(mp.x,mp.y, this.px, this.py) < 8)
+        let p = model.viewToModel(mp);
+        if (dist(p.x,p.y, this.px, this.py) < 8)
             return "slideHole";
-        if (dist(mp.x,mp.y, this.pt2.x, this.pt2.y) < 5)
+        if (dist(p.x,p.y, this.pt2.x, this.pt2.y) < 5)
             return "endpoint";
         return null;
     }
 
-    adjust(grip, mp) {
-        console.log("crank.adjust "+mp);
+    adjust(grip, vmp) {
+        console.log("crank.adjust "+vmp);
+        let mp = model.viewToModel(vmp);
         if (grip == "slideHole") {
             this.px = mp.x;
             this.py = mp.y;
@@ -138,6 +133,8 @@ class SlipRod extends Widget {
     draw(c) {
         var ctx = c.getContext("2d");
         var trail = this.trail;
+        //ctx.scale(scale, scale);
+        ctx.setTransform(model.scale, 0, 0, model.scale, model.tx, model.ty);
         ctx.lineWidth = 1;
         ctx.strokeStyle = "#000000";
         // Draw anchor point
@@ -154,18 +151,18 @@ class SlipRod extends Widget {
         ctx.moveTo(this.pt1.x, this.pt1.y);
         ctx.lineTo(this.pt2.x, this.pt2.y);
         ctx.stroke();
-        if (showTrails)
+        if (model.showTrails)
             trail.push(this.pt2);
         // draw trail
         ctx.lineWidth = 0.5;
         ctx.strokeStyle = "#000088";
-        if (trail.length > maxTrailPts)
+        if (trail.length > model.maxTrailPts)
             trail = trail.slice(1);
         //console.log("trail: "+trail);
         ctx.beginPath();
         trail.forEach(pt => ctx.lineTo(pt.x,pt.y));
         ctx.stroke();
-        if (showRanges) {
+        if (model.showRanges) {
             var range = this.range;
             ctx.beginPath();
             range.forEach(pt => ctx.lineTo(pt.x,pt.y));
@@ -185,7 +182,7 @@ class Crank extends Widget {
     }
 
     update() {
-        var a = -this.w*t;
+        var a = -this.w*model.t;
         this.pt2 = {
             x: this.x0 + this.R*Math.cos(a),
             y: this.y0 + this.R*Math.sin(a)
@@ -207,7 +204,8 @@ class Crank extends Widget {
 
                 
     findGrip(mp) {
-        var d = dist(mp.x,mp.y, this.x0, this.y0);
+        let p = model.viewToModel(mp);
+        var d = dist(p.x,p.y, this.x0, this.y0);
         if (d < 5)
             return "XY0";
         if (Math.abs(d - this.R) < 5)
@@ -215,7 +213,8 @@ class Crank extends Widget {
         return null;
     }
 
-    adjust(grip, mp) {
+    adjust(grip, vmp) {
+        let mp = model.viewToModel(vmp);
         console.log("crank.adjust "+mp);
         if (grip == "R") {
             this.R = dist(mp.x,mp.y, this.x0,this.y0)
@@ -232,6 +231,7 @@ class Crank extends Widget {
 
     draw(c) {
         var ctx = c.getContext("2d");
+        ctx.setTransform(model.scale, 0, 0, model.scale, model.tx, model.ty);
         var x0 = this.x0, y0 = this.y0;
         var pt2 = this.pt2;
         var trail = this.trail;
@@ -247,15 +247,15 @@ class Crank extends Widget {
         ctx.stroke();
         // draw trail
         ctx.lineWidth = 0.5;
-        if (trail.length > maxTrailPts)
+        if (trail.length > model.maxTrailPts)
             trail = trail.slice(1);
         //console.log("trail: "+trail);
-        if (showTrails) {
+        if (model.showTrails) {
             ctx.beginPath();
             trail.forEach(pt => ctx.lineTo(pt.x,pt.y));
             ctx.stroke();
         }
-        if (showRanges) {
+        if (model.showRanges) {
             var range = this.range;
             ctx.beginPath();
             range.forEach(pt => ctx.lineTo(pt.x,pt.y));
@@ -270,8 +270,34 @@ class Model {
         this.widgets = [];
         this.widgetsByName = {};
         //this.loadDefault();
+        this.t = 0;
         this.dt = 0.03;
         this.gen = 1;
+        this.showTrails = false;
+        this.showRanges = true;
+        this.scale = 1.0;
+        this.deltaScale = 1.05;
+        this.tx = 0;
+        this.ty = 0;
+        this.mouseDown = false;
+        this.mpDown = null;
+        this.trDown = null;
+        this.maxTrailPts = 300;
+        this.selectedWidget = null;
+        this.selectedGrip = null;
+        this.initUI();
+    }
+    
+    start() {
+        let inst = this;
+        setInterval(() => inst.update(), 1000/60);
+    }
+
+    viewToModel(mp) {
+//        return {x: mp.x/this.scale - this.tx,
+//                y: mp.y/this.scale - this.ty};
+        return {x: (mp.x - this.tx)/this.scale,
+                y: (mp.y - this.ty)/this.scale};
     }
 
     load(specs) {
@@ -346,16 +372,38 @@ class Model {
         this.widgets.forEach(w => w.clearTrail());
     }
     
-    showTrails(v) {
+    setShowTrails(v) {
         if (!v)
             this.clear();
-        showTrails = v;
+        this.showTrails = v;
     }
 
-    redraw() {
+    drawGrid() {
         var c = document.getElementById(this.canvName);
         var ctx = c.getContext("2d");
-        ctx.clearRect(0,0,c.width, c.height);
+        var dx = 100;
+        var dy = dx;
+        var n = 20;
+        var h = 10000;
+        ctx.strokeStyle = "#000000";
+        for (var i = -n; i<=n; i++) {
+            var x = i*dx
+            ctx.moveTo(x,-h);
+	    ctx.lineTo(x, h);
+            var y = i*dx
+            ctx.moveTo(-h,y);
+	    ctx.lineTo(h, y);
+        }
+        ctx.stroke();
+    }
+    
+    draw() {
+        var c = document.getElementById(this.canvName);
+        var ctx = c.getContext("2d");
+        //ctx.clearRect(0,0,c.width, c.height);
+        var s = 1000000;
+        ctx.clearRect(-s,-s,2*s,2*s);
+        this.drawGrid();
         this.widgets.forEach(w => w.draw(c));
     }
     
@@ -368,120 +416,153 @@ class Model {
     pause() { this.dt = 0; }
     
     update() {
-        t += this.dt;
+        this.t += this.dt;
         this.widgets.forEach(w => w.update());
-        this.redraw();
+        this.draw();
         var statusText = "";
-        if (selectedWidget) {
-            statusText += selectedWidget.name;
-            if (selectedGrip)
-                statusText += " "+selectedGrip;
+        if (model.selectedWidget) {
+            statusText += model.selectedWidget.name;
+            if (model.selectedGrip)
+                statusText += " "+model.selectedGrip;
         }
         statusText += " g: "+this.gen;
         $("#status").html(statusText);
     }
-}
 
-function togglePlay()
-{
-    model.dump();
-    if ($("#play").val() == "play") {
-        model.play();
-        $("#play").val("pause");
+    initUI() {
+        var model = this;
+        var w = model.widget;
+        $("#play").click(() => {
+            this.togglePlay();
+        });
+        $("#trails").click(() => {
+            this.toggleTrails();
+        });
+        $("#delete").click(() => {
+            model.deleteWidget(model.selectedWidget);
+        });
+        $("#c1").click(() => {
+            model.load(MODEL1);
+        });
+        $("#c2").click(() => {
+            model.load(MODEL2);
+        });
+        $("#c3").click(() => {
+            w.clearTrail();
+            w.py = 240;
+        });
+        $("#c4").click(() => {
+            w.clearTrail();
+            w.py = 280;
+        });
+        $("#c5").click(() => {
+            w.clearTrail();
+            w.py = 295;
+        });
+        $("#myCanvas").bind("mousewheel", e => {
+            console.log("mw delta: "+e.wheelDelta);
+            var dy = e.originalEvent.deltaY;
+            if (dy > 0)
+                this.scale *= this.deltaScale;
+            if (dy < 0)
+                this.scale /= this.deltaScale;
+            console.log("dy: "+dy+"  scale: "+model.scale);
+            var vmp = relativePos(e);
+            this.showPos(vmp);
+        });
+        $("#myCanvas").mousedown(e => {
+            var mp = relativePos(e);
+            if (e.shiftKey) {
+                if (model.selectedWidget) {
+                    var sr = new SlipRod(
+                        {L: 200, px: mp.x, py: mp.y,
+                         driver: model.selectedWidget});
+                    model.addWidget(sr);
+                }
+            }
+            model.mpDown = mp;
+            this.trDown = {x: model.tx, y: model.ty};
+            model.mouseDown = true;
+            model.selectedGrip = null;
+            model.selectedWidget = null;
+            model.widgets.forEach(w => {
+                if (model.selectedWidget == null) {
+                    model.selectedGrip = w.findGrip(mp);
+                    if (model.selectedGrip != null) {
+                        model.selectedWidget = w;
+                    }
+                }
+            });
+            console.log("selectedGrip: "+model.selectedGrip);
+            console.log("selectedWidget: "+model.selectedWidget);
+        });
+        $("#myCanvas").mouseup(e => { model.mouseDown = false; });
+        $("#myCanvas").mousemove(e => {
+            var vmp = relativePos(e);
+            this.showPos(vmp);
+            if (!model.mouseDown)
+                return;
+            var w = model.selectedWidget;
+            if (w == null) {
+                if (!model.mpDown)
+                    return;
+                let dx = vmp.x - model.mpDown.x;
+                let dy = vmp.y - model.mpDown.y;
+                //console.log("dx: "+dx+" dy: "+dy);
+                model.tx = model.trDown.x + dx;
+                model.ty = model.trDown.y + dy;
+                return;
+            }
+            //console.log("x y: "+mp.x+" "+mp.y);
+            w.adjust(model.selectedGrip, vmp);
+            model.gen++;
+            model.clear();
+        });
     }
-    else {
-        model.pause();
-        $("#play").val("play");
-    }
-}
 
-function toggleTrails()
-{
-    var bt = $("#trails");
-    model.dump();
-    if (bt.val() == "trails") {
-        model.showTrails(true);
-        bt.val("no trails");
+    showPos(vmp)
+    {
+        var cp = this.viewToModel(vmp);
+        var posStr =
+            sprintf("scale: %.3f %6.1f %6.1f", this.scale, cp.x, cp.y);
+        $("#pos").html(posStr);        
     }
-    else {
-        model.showTrails(false);
-        bt.val("trails");
+    
+    togglePlay()
+    {
+        model.dump();
+        if ($("#play").val() == "play") {
+            model.play();
+            $("#play").val("pause");
+        }
+        else {
+            model.pause();
+            $("#play").val("play");
+        }
+    }
+
+    toggleTrails()
+    {
+        var bt = $("#trails");
+        model.dump();
+        if (bt.val() == "trails") {
+            model.setShowTrails(true);
+            bt.val("no trails");
+        }
+        else {
+            model.setShowTrails(false);
+            bt.val("trails");
+        }
     }
 }
 
 $(document).ready(() => {
     model = new Model();
-    model.load(mod1);
-    var w = model.widget;
-    $("#play").click(() => {
-        togglePlay();
-    });
-    $("#trails").click(() => {
-        toggleTrails();
-    });
-    $("#delete").click(() => {
-        model.deleteWidget(selectedWidget);
-    });
-    $("#c1").click(() => {
-        model.load(mod1);
-    });
-    $("#c2").click(() => {
-        model.load(mod2);
-    });
-    $("#c3").click(() => {
-        w.clearTrail();
-        w.py = 240;
-    });
-    $("#c4").click(() => {
-        w.clearTrail();
-        w.py = 280;
-    });
-    $("#c5").click(() => {
-        w.clearTrail();
-        w.py = 295;
-    });
-    $("#myCanvas").mousedown(e => {
-        var mp = relativePos(e);
-        if (e.shiftKey) {
-            if (selectedWidget) {
-                var sr = new SlipRod(
-                    {L: 200, px: mp.x, py: mp.y,
-                     driver: selectedWidget});
-                model.addWidget(sr);
-            }
-        }
-        mouseDown = true;
-        selectedGrip = null;
-        selectedWidget = null;
-        model.widgets.forEach(w => {
-            if (selectedWidget == null) {
-                selectedGrip = w.findGrip(mp);
-                if (selectedGrip != null) {
-                    selectedWidget = w;
-                }
-            }
-        });
-        console.log("selectedGrip: "+selectedGrip);
-        console.log("selectedWidget: "+selectedWidget);
-    });
-    $("#myCanvas").mouseup(e => { mouseDown = false; });
-    $("#myCanvas").mousemove(e => {
-        if (!mouseDown)
-            return;
-        var w = selectedWidget;
-        if (w == null)
-            return;
-        var mp = relativePos(e);
-        //console.log("x y: "+mp.x+" "+mp.y);
-        w.adjust(selectedGrip, mp);
-        model.gen++;
-        model.clear();
-    });
-
-    setInterval(() => model.update(), 1000/60);
+    model.load(MODEL1);
+    model.start();
 });
 
-var mod1 =
+var MODEL1 =
 {
    "type": "Model",
    "widgets": [
@@ -528,7 +609,7 @@ var mod1 =
    ]
 };
 
-var mod2 =
+var MODEL2 =
 {
    "type": "Model",
    "widgets": [

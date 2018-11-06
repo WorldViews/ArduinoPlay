@@ -42,12 +42,12 @@ class RobotGame {
         console.log("fx: "+fx+"  sx: "+sx);
         this.setServo(sx);
         setMark("kin", sx, 40, "blue");
-		
-	}
+    }
     
     example(body) {
         //console.log("body: ", body);
         let msg = body.msg;
+<<<<<<< HEAD
         //console.log("body "+body.bodyNum+" "+body.id);
         //console.log("body msg: "+JSON.stringify(msg));
         var lhpos = msg['LEFT_HAND'];
@@ -81,6 +81,34 @@ class RobotGame {
 		  this.cmdVel.publish(twist);
 		}
 		
+=======
+        console.log("body "+body.bodyNum+" "+body.id);
+        //console.log("body msg: "+JSON.stringify(msg));
+        var lhpos = msg['LEFT_HAND'];
+        var lhconf = msg['LEFT_HAND_c'];
+        console.log("lhpos: "+lhpos+" conf: "+lhconf);
+        var rhpos = msg['RIGHT_HAND'];
+        var rhconf = msg['RIGHT_HAND_c'];
+        console.log("rhpos: "+rhpos+" conf: "+rhconf);
+        if (!msg['hands'])
+            return;
+        var rhandstate = msg['hands']['Right'];
+        var lhandstate = msg['hands']['Left'];
+        var rhand = rhandstate[0];
+        var rhandConf = rhandstate[1];
+        var lhand = lhandstate[0];
+        var lhandConf = lhandstate[1];
+        console.log("lhstate: "+lhandstate);
+        console.log("rhstate: "+rhandstate);
+        if (lhand == "NotTracked" || lhand == "Unknown")
+            $("#leftHand").html("");
+        else
+            $("#leftHand").html(lhand+" "+lhandConf);
+        if (rhand == "NotTracked" || rhand == "Unknown")
+            $("#rightHand").html("");
+        else
+            $("#rightHand").html(rhand+" "+rhandConf);
+>>>>>>> 93f35dcb14b14bf3c267d8dbffce0b6429875a0a
     }
 
     handleKinUpdate(kinWatch) {
