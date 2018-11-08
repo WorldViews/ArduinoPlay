@@ -26,7 +26,7 @@ class RobotGame {
 		
 		 this.cmdVel = new ROSLIB.Topic({
 		    ros : ros,
-		    name : '/hand_pos',
+		    name : '/kinect_pos',
 		    messageType : 'geometry_msgs/Twist'
 		  });
 
@@ -47,6 +47,41 @@ class RobotGame {
     example(body) {
         //console.log("body: ", body);
         let msg = body.msg;
+<<<<<<< HEAD
+        //console.log("body "+body.bodyNum+" "+body.id);
+        //console.log("body msg: "+JSON.stringify(msg));
+        var lhpos = msg['LEFT_HAND'];
+        var lhconf = msg['LEFT_HAND_c'];
+        //console.log("lhpos: "+lhpos+" conf: "+lhconf);
+        var lhpos = msg['LEFT_HAND'];
+        var lhconf = msg['LEFT_HAND_c'];
+        //console.log("lhpos: "+lhpos+" conf: "+lhconf);
+        //console.log("body msg: "+JSON.stringify(msg));
+		var rspos = msg['RIGHT_SHOULDER'];
+		var rsconf = msg['RIGHT_SHOULDER_c'];
+		var rhpos = msg['RIGHT_HAND'];
+		var rhconf = msg['RIGHT_HAND_c'];
+		
+		if(rsconf > 0.5 && rhconf > 0.5)
+		{
+			//console.log("RIGHT_SHOULDER: " + rspos[0]);
+			//console.log("RIGHT_HAND: " + rhpos[0]);
+			var twist = new ROSLIB.Message({
+		    linear : {
+		      x : rhpos[0] - rspos[0],
+		      y : rhpos[1] - rspos[1],
+		      z : rhpos[2] - rspos[2]
+		    },
+		    angular : {
+		      x : -0.1,
+		      y : -0.2,
+		      z : -0.3
+		    }
+		  });
+		  this.cmdVel.publish(twist);
+		}
+		
+=======
         console.log("body "+body.bodyNum+" "+body.id);
         //console.log("body msg: "+JSON.stringify(msg));
         var lhpos = msg['LEFT_HAND'];
@@ -73,6 +108,7 @@ class RobotGame {
             $("#rightHand").html("");
         else
             $("#rightHand").html(rhand+" "+rhandConf);
+>>>>>>> 93f35dcb14b14bf3c267d8dbffce0b6429875a0a
     }
 
     handleKinUpdate(kinWatch) {
@@ -98,6 +134,7 @@ class RobotGame {
 		    messageType : 'geometry_msgs/Twist'
 		  });*/
 
+		/*
 		  var twist = new ROSLIB.Message({
 		    linear : {
 		      x : sval,
@@ -111,6 +148,7 @@ class RobotGame {
 		    }
 		  });
 		  this.cmdVel.publish(twist);
+		*/
     }
 }
 
