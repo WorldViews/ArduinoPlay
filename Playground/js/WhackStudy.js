@@ -124,11 +124,14 @@ class Game {
         this.auto = false;
 	this.lingerTime = 2.5;
         var inst = this;
-        this.portal = new MUSEPortal();
-        this.portal.registerMessageHandler(msg => inst.handleMessage(msg));
+        var str = "No muse portal";
+        if (0) {
+            this.portal = new MUSEPortal();
+            this.portal.registerMessageHandler(msg => inst.handleMessage(msg));
+            str = "server: "+this.portal.server;
+        }
         this.initROS();
 	this.start();
-        var str = "server: "+this.portal.server;
         $("#debug").html(str);
     }
 
@@ -236,7 +239,8 @@ class Game {
 
     sendMessage(msg) {
         //console.log("sendMessage "+JSON.stringify(msg));
-        this.portal.sendMessage(msg);
+        if (this.portal)
+            this.portal.sendMessage(msg);
     }
     
     handleMessage(msg) {
