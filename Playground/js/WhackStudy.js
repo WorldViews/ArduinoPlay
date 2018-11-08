@@ -175,8 +175,8 @@ class Game {
         */
         let hit_pos = new ROSLIB.Topic({
             ros : ros,
-            name : '/hit_pos',
-            messageType : 'geometry_msgs/Vector3'
+            name : '/hit_num',
+            messageType : 'std_msgs/Int32'
         });
         this.hit_pos = hit_pos;
         
@@ -340,11 +340,15 @@ class Game {
             if (this.auto)
 	        this.moveMoles();
 	}
-        var num = w.idx;
+		var num = w.idx;
+		
         var pos = this.positions[num];
         console.log("pos: "+pos.x+" "+pos.y);
         console.log("num: "+num);
-        this.hit_pos.publish(num);
+		var hit_number = new ROSLIB.Message({
+				data : num
+		})
+        this.hit_pos.publish(hit_number);
         
     }
 
