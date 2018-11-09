@@ -18,14 +18,16 @@ if (isBrowser()) {
     var global = window
 }
 
-
-MUSE.getParameterByName = function(name) {
+MUSE.getParameterByName = function(name, defaultVal) {
     if (typeof window === 'undefined') {
         console.log("***** getParameterByName called outside of browser...");
-        return null;
+        return defaultVal;
     }
     var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
-    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+    val = match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+    if (!val)
+        return defaultVal;
+    return val;
 }
 
 function getClockTime()
