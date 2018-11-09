@@ -3,6 +3,13 @@ var t = 0;
 
 var role = "farmer";
 var showTrails = true;
+var colors = {};
+colors[[0,0]] = 'green';
+colors[[1,0]] = 'red';
+colors[[2,0]] = 'blue';
+colors[[0,1]] = 'blue';
+colors[[1,1]] = 'yellow';
+colors[[2,1]] = 'green';
 
 function rand(n)
 {
@@ -64,9 +71,14 @@ class Hole extends Widget {
         this.R = opts.R || 20;
         this.x0 = opts.x0;
         this.y0 = opts.y0;
+        this.i = opts.i;
+        this.j = opts.j;
         this.strokeStyle = "#000000";
+        this.strokeWidthe = 1;
         this.fillStyle = "#000000";
         this.fillStyle = null;
+        if (opts.color)
+            this.fillStyle = opts.color;
     }
 
     setOccupied(v) {
@@ -100,7 +112,8 @@ class Hole extends Widget {
         ctx.strokeStyle = this.strokeStyle;
         ctx.fillStyle = this.fillStyle;
         if (this.selected) {
-            ctx.strokeStyle = "#ff0000";
+            //ctx.strokeStyle = "#ff0000";
+            ctx.lineWidth = 8;
         }
         ctx.beginPath();
         // Draw drivepoint path
@@ -132,7 +145,7 @@ class Game {
         }
         this.initROS();
 	this.start();
-        $("#debug").html(str);
+        //$("#debug").html(str);
     }
 
     initROS() {
@@ -275,7 +288,8 @@ class Game {
                 name = "cell_"+i+"_"+j;
                 var x0 = left + i*wd;
                 var y0 = top +  j*ht;
-                var hole = new Hole({x0, y0, name});
+                var color = colors[[i,j]];
+                var hole = new Hole({i, j, x0, y0, name, color});
                 hole.idx = idx++;
                 this.positions[hole.idx] = {x: x0, y: y0};
                 this.addWidget(hole);
@@ -342,10 +356,11 @@ class Game {
 	}
         var num = w.idx;
         var pos = this.positions[num];
+        console.log("i: "+w.i+"  j: "+w.j);
         console.log("pos: "+pos.x+" "+pos.y);
         console.log("num: "+num);
         this.hit_pos.publish(num);
-        
+        this.select(w);
     }
 
     handleHitAsMole(w) {
@@ -370,12 +385,14 @@ var game = null;
 
 $(document).ready(() => {
     game = new Game();
+    /*
     if (role == "mole") {
         $("#banner").html("You are the mole - choose your holes well!");
     }
     else {
         $("#banner").html("You are the gardner - whack that mole!");
     }
+    */
     $("#play").click(() => {
         game.start();
     });
