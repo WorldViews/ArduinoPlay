@@ -117,7 +117,7 @@ class Game {
         this.widgets = [];
         this.mouseDown = false;
         this.widgetsByName = {};
-        this.createHoles(3,3);
+        this.createHoles(3,2);
         this.delay = 1000;
         this.auto = false;
 	this.lingerTime = 2.5;

@@ -11,6 +11,17 @@ colors[[0,1]] = 'blue';
 colors[[1,1]] = 'yellow';
 colors[[2,1]] = 'green';
 
+function logEvent(obj)
+{
+    obj.t = getClockTime();
+    var str = $.param(obj);
+    var url = "/logEvent?"+str;
+    console.log("url: "+url);
+    $.getJSON(url, null, data => {
+        console.log("Got reply data: ", data);
+    });
+}
+
 function rand(n)
 {
     return Math.floor(Math.random()*1000000) % n;
@@ -354,7 +365,7 @@ class Game {
             if (this.auto)
 	        this.moveMoles();
 	}
-		var num = w.idx;
+	var num = w.idx;
 		
         var pos = this.positions[num];
         console.log("i: "+w.i+"  j: "+w.j);
@@ -365,12 +376,14 @@ class Game {
 	    data : num
 	})
         this.hit_pos.publish(hit_number);
+        logEvent({"event": "click"});
     }
 
     handleHitAsMole(w) {
         console.log("handleHitAsMole", w);
         this.setMolePosition(w.idx);
         this.sendMessage({'msgType': 'whack.setMolePos', 'index': w.idx});
+        logEvent({"event": "click"});
     }
 
     

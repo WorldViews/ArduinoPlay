@@ -44,6 +44,17 @@ function findDevice() {
 }
 */
 
+function csvEncode(obj)
+{
+    var str = "";
+    for (var key in obj) {
+        if (str != "")
+            str += ", ";
+        str += (key +", "+obj[key]);
+    }
+    return str+"\n";
+}
+
 console.log("***** Running server2.js ****");
 console.log("argv:", argv);
 if (argv.length > 2)
@@ -55,6 +66,7 @@ if (argv.length > 3)
 console.log("Using com port: "+comPortPath);
 var Playground = require("playground-io");
 var five = require("johnny-five");
+var fs = require('fs');
 var sock = null;
 var activeSockets = [];
 var light = null;
@@ -103,6 +115,17 @@ app.get("/playBox", function (req, res) {
 
 app.get("/realtime", function (req, res) {
   res.sendFile(__dirname + "/realtime.html");
+});
+
+app.get("/logEvent", function (req, res) {
+    var q = req.query;
+    console.log("event: "+ q);
+    var str = csvEncode(q);
+    fs.appendFile("eventLog.txt", str, encoding='utf8', err => {
+        if (err)
+            console.log("Err appending to file", err);
+    });
+    res.end("ok");
 });
 
 app.get("/*", function (req, res) {
@@ -236,13 +259,10 @@ function setupBoard(comPortPath) {
         });
 
         accelerometer.on("change", (data) => {
-            //console.log("acc data: "+JSON.stringify(data));
-            //console.log("acc data: "+data.x+" "+data.y+" "+data.z);
             //console.log("sending acc.change "+data.x+" "+data.y+" "+data.z);
             var acc = {x: data.x, y: data.y, z: data.z};
             //sock.emit("acc.change", data.x+" "+data.y+" "+data.z);
             sendMessage("acc.change", acc);
-            //piezo.frequency(data.double ? 1500 : 500, 50);
         });
 
         if (light) {
@@ -358,8 +378,9 @@ io.on("connection", function(socket) {
     });
     socket.on("servo.set", function(data) {
         //console.log("servo value: "+data);
-        if (servo)
+        if (servo) {
             servo.to(data);
+        }
         else
             console.log("No servo "+data);
     });
