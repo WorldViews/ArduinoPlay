@@ -376,7 +376,7 @@ class Game {
 	    data : num
 	})
         this.hit_pos.publish(hit_number);
-        logEvent({"event": "click"});
+        logEvent({event: "click", i: w.i, j: w.j, index: w.idx});
     }
 
     handleHitAsMole(w) {
@@ -427,5 +427,6 @@ $(document).ready(() => {
         //game.sendMessage(msg);
     });
     setInterval(() => game.update(), 1000/30);
+    logEvent({"event": "start"});
 });
 
