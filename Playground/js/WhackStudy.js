@@ -4,12 +4,12 @@ var t = 0;
 var role = "farmer";
 var showTrails = true;
 var colors = {};
-colors[[0,0]] = 'green';
-colors[[1,0]] = 'red';
-colors[[2,0]] = 'blue';
+colors[[0,0]] = 'red';
+colors[[1,0]] = 'yellow';
+colors[[2,0]] = 'white';
 colors[[0,1]] = 'blue';
-colors[[1,1]] = 'yellow';
-colors[[2,1]] = 'green';
+colors[[1,1]] = 'green';
+colors[[2,1]] = 'red';
 
 function logEvent(obj)
 {
