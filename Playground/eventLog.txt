@@ -1,0 +1,26 @@
+event, start, t, 1542752155.873
+event, click, i, 0, j, 0, index, 0, t, 1542752156.782
+event, click, i, 2, j, 0, index, 4, t, 1542752210.383
+event, click, i, 0, j, 0, index, 0, t, 1542752243.205
+event, click, i, 1, j, 0, index, 2, t, 1542752246.849
+event, click, i, 2, j, 0, index, 4, t, 1542752251.785
+event, click, i, 0, j, 1, index, 1, t, 1542752255.908
+event, click, i, 1, j, 1, index, 3, t, 1542752261.169
+event, click, i, 2, j, 1, index, 5, t, 1542752265.833
+event, start, t, 1542752738.111
+event, click, i, 0, j, 0, index, 0, t, 1542752739.931
+event, click, i, 1, j, 0, index, 2, t, 1542752743.034
+event, click, i, 2, j, 0, index, 4, t, 1542752771.749
+event, click, i, 0, j, 1, index, 1, t, 1542752796.828
+event, start, t, 1542752961.848
+event, start, t, 1542758648.279
+event, click, i, 1, j, 0, index, 2, t, 1542758659.462
+event, click, i, 2, j, 0, index, 4, t, 1542758661.766
+event, click, i, 0, j, 1, index, 1, t, 1542758669.568
+event, click, i, 1, j, 0, index, 2, t, 1542758673.614
+event, click, i, 1, j, 1, index, 3, t, 1542758677.072
+event, click, i, 0, j, 0, index, 0, t, 1542758680.161
+event, click, i, 2, j, 1, index, 5, t, 1542758683.204
+event, click, i, 0, j, 0, index, 0, t, 1542758845.565
+event, click, i, 1, j, 0, index, 2, t, 1542758848.958
+event, click, i, 2, j, 0, index, 4, t, 1542758858.304
