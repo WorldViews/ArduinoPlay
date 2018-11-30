@@ -1,0 +1,31 @@
+Setup for MS mode
+
+Slave
+Roscore
+Plug in the robot’s cablesudo chmod 777 /dev/ttyUSB0                            (for permission)roslaunch phantomx_rst arm.launch                          (for set up the robot)
+Master
+Plug in the robot’s cable
+sudo chmod 777 /dev/ttyUSB0                        (for permission)roslaunch phantomx_rst master_arm.launch                        (for set up the robot)roslaunch two_robot_control two_robot_control.launch                 (to start sending the joint angles)
+
+Go back to Slave
+roslaunch output ms_output.launch             (to start receiving the joint angles and move the robot)
+
+If you start “roslaunch output ms_output.launch” without starting “roslaunch two_robot_control two_robot_control.launch”, the robot arm goes to the initial position, so the robot arm may contact with some obstacles and may be broken.
+
+
+Setup for Leap Mode
+Slave
+roscoresudo chmod 777 /dev/ttyUSB0roslaunch phantomx_rst arm.launch
+Master
+Connect Leap via USB
+roslaunch leap_motion leap_robot_gxyzp.launch
+
+Setup for Click Mode
+Slave
+roscoresudo chmod 777 /dev/ttyUSB0roslaunch phantomx_rst arm.launch
+Master
+runserver
+
+go back to SLAVE
+roslaunch rosbridge_server rosbridge_websocket.launch                     (for set up the communication)roslaunch hit_based_robot_control hit_num_robot_control.launch
+
