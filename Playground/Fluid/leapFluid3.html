@@ -158,9 +158,13 @@
 
         uniform vec2 u_textureSize;
 
-        uniform vec2  u_mouseCoord[3];
-        uniform float u_mouseLength[3];
-        uniform float u_mouseEnable[3];
+        uniform vec2 u_mouseCoord1;
+        uniform float u_mouseLength1;
+        uniform float u_mouseEnable1;
+
+        uniform vec2 u_mouseCoord2;
+        uniform float u_mouseLength2;
+        uniform float u_mouseEnable2;
 
         uniform float u_reciprocalRadius;
 
@@ -170,12 +174,16 @@
 
             float currentMaterial = texture2D(u_material, fragCoord/u_textureSize).x;
 
-            for (int i=1; i<=1; i++) {
-                if (u_mouseEnable[i] == 1.0){
-                    vec2 pxDist = fragCoord - u_mouseCoord[i];
-                    currentMaterial += u_mouseLength[i]*0.1*exp(-(pxDist.x*pxDist.x+pxDist.y*pxDist.y)*u_reciprocalRadius);
-                }
+            if (u_mouseEnable1 == 1.0){
+                vec2 pxDist = fragCoord - u_mouseCoord1;
+                currentMaterial += u_mouseLength1*0.1*exp(-(pxDist.x*pxDist.x+pxDist.y*pxDist.y)*u_reciprocalRadius);
             }
+
+            if (u_mouseEnable2 == 1.0){
+                vec2 pxDist = fragCoord - u_mouseCoord2;
+                currentMaterial += u_mouseLength2*0.1*exp(-(pxDist.x*pxDist.x+pxDist.y*pxDist.y)*u_reciprocalRadius);
+            }
+
             if (currentMaterial > 0.0) currentMaterial -= 0.002;//material disappears over time
             gl_FragColor = vec4(currentMaterial, 0, 0, 0);
         }
@@ -188,9 +196,13 @@
 
         uniform vec2 u_textureSize;
 
-        uniform vec2  u_mouseCoord[3];
-        uniform vec2  u_mouseDir[3];
-        uniform float u_mouseEnable[3];
+        uniform vec2 u_mouseCoord1;
+        uniform vec2 u_mouseDir1;
+        uniform float u_mouseEnable1;
+
+        uniform vec2 u_mouseCoord2;
+        uniform vec2 u_mouseDir2;
+        uniform float u_mouseEnable2;
 
         uniform float u_reciprocalRadius;
 
@@ -201,12 +213,17 @@
             vec2 fragCoord = gl_FragCoord.xy;
 
             vec2 currentVelocity = texture2D(u_velocity, fragCoord/u_textureSize).xy;
-            for (int i=0; i<=2; i++) {
-                if (u_mouseEnable[i] == 1.0){
-                    vec2 pxDist = fragCoord - u_mouseCoord[i];
-                    currentVelocity += u_mouseDir[i]*u_dt*exp(-(pxDist.x*pxDist.x+pxDist.y*pxDist.y)*u_reciprocalRadius);
-                }
+
+            if (u_mouseEnable1 == 1.0){
+                vec2 pxDist = fragCoord - u_mouseCoord1;
+                currentVelocity += u_mouseDir1*u_dt*exp(-(pxDist.x*pxDist.x+pxDist.y*pxDist.y)*u_reciprocalRadius);
             }
+
+            if (u_mouseEnable2 == 1.0){
+                vec2 pxDist = fragCoord - u_mouseCoord2;
+                currentVelocity += u_mouseDir2*u_dt*exp(-(pxDist.x*pxDist.x+pxDist.y*pxDist.y)*u_reciprocalRadius);
+            }
+
             gl_FragColor = vec4(currentVelocity, 0, 0);
         }
     </script>
@@ -419,7 +436,7 @@
     <script type="text/javascript" src="js/threeView.js"></script>
     <script type="text/javascript" src="js/GLBoilerplate.js"></script>
     <script type="text/javascript" src="js/GPUMath.js"></script>
-    <script type="text/javascript" src="js/fluid.js"></script>
+    <script type="text/javascript" src="js/tweakMain3.js"></script>
 
 <script src="http://js.leapmotion.com/leap-0.6.3.min.js"></script>
 <script src="js/LeapFluidControl.js"></script>
