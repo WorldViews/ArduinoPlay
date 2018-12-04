@@ -2,6 +2,31 @@
 
 var model = null;
 
+function rand(a,b)
+{
+    return a + (b-a)*Math.random();
+}
+
+function randIdx(n)
+{
+    return Math.floor(n*Math.random());
+}
+
+function randItem(v)
+{
+    var i = randIdx(v.length);
+    return v[i];
+}
+
+function randShift(x, y, dMin, dMax)
+{
+    var d = rand(dMin, dMax);
+    var a = rand(0,2*Math.PI);
+    var dx = d*Math.cos(a);
+    var dy = d*Math.sin(a);
+    return {x: x+dx, y: y+dy}
+}
+
 function clone(obj) {
     return JSON.parse(JSON.stringify(obj));
 }
@@ -333,6 +358,36 @@ class Model {
         });
     }
 
+    addRandomWidgets(n)
+    {
+        for (var i=0; i<n; i++) {
+            var w = randItem(model.widgets);
+            this.addRandomWidget(w);
+        }
+    }
+
+    addRandomWidget(w)
+    {
+        if (!w)
+            w = model.selectedWidget;
+        if (!w) {
+            console.log("No selected widget");
+            return;
+        }
+        if (w.pt2 == null) {
+            console.log("Obj is not SlipRod");
+            return;
+        }
+        var pt = randShift(w.pt2.x, w.pt2.y, 40.0, 200.0);
+        var len = rand(40, 250);
+        var sr = new SlipRod(
+            {L: len, px: pt.x, py: pt.y, driver: w}
+        );
+        model.addWidget(sr);
+        model.selectedWidget = sr;
+        model.selectedGrip = null;
+    }
+    
     addWidget(w) {
         this.widgetsByName[w.name] = w;
         this.widgets.push(w);
