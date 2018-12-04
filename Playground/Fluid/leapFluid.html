@@ -158,22 +158,22 @@
 
         uniform vec2 u_textureSize;
 
-        uniform vec2  u_mouseCoord[3];
-        uniform float u_mouseLength[3];
-        uniform float u_mouseEnable[3];
+        uniform vec2  u_tipCoord[3];
+        uniform float u_tipLength[3];
+        uniform float u_tipEnable[3];
 
         uniform float u_reciprocalRadius;
 
         void main() {
-
             vec2 fragCoord = gl_FragCoord.xy;
 
             float currentMaterial = texture2D(u_material, fragCoord/u_textureSize).x;
 
-            for (int i=1; i<=1; i++) {
-                if (u_mouseEnable[i] == 1.0){
-                    vec2 pxDist = fragCoord - u_mouseCoord[i];
-                    currentMaterial += u_mouseLength[i]*0.1*exp(-(pxDist.x*pxDist.x+pxDist.y*pxDist.y)*u_reciprocalRadius);
+            for (int i=1; i<=2; i++) {
+                if (u_tipEnable[i] == 1.0){
+                    vec2 pxDist = fragCoord - u_tipCoord[i];
+                    currentMaterial += u_tipLength[i]*0.1*
+                                exp(-(pxDist.x*pxDist.x+pxDist.y*pxDist.y)*u_reciprocalRadius);
                 }
             }
             if (currentMaterial > 0.0) currentMaterial -= 0.002;//material disappears over time
@@ -188,9 +188,9 @@
 
         uniform vec2 u_textureSize;
 
-        uniform vec2  u_mouseCoord[3];
-        uniform vec2  u_mouseDir[3];
-        uniform float u_mouseEnable[3];
+        uniform vec2  u_tipCoord[3];
+        uniform vec2  u_tipDir[3];
+        uniform float u_tipEnable[3];
 
         uniform float u_reciprocalRadius;
 
@@ -202,9 +202,9 @@
 
             vec2 currentVelocity = texture2D(u_velocity, fragCoord/u_textureSize).xy;
             for (int i=0; i<=2; i++) {
-                if (u_mouseEnable[i] == 1.0){
-                    vec2 pxDist = fragCoord - u_mouseCoord[i];
-                    currentVelocity += u_mouseDir[i]*u_dt*exp(-(pxDist.x*pxDist.x+pxDist.y*pxDist.y)*u_reciprocalRadius);
+                if (u_tipEnable[i] == 1.0){
+                    vec2 pxDist = fragCoord - u_tipCoord[i];
+                    currentVelocity += u_tipDir[i]*u_dt*exp(-(pxDist.x*pxDist.x+pxDist.y*pxDist.y)*u_reciprocalRadius);
                 }
             }
             gl_FragColor = vec4(currentVelocity, 0, 0);

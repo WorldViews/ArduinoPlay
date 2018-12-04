@@ -5,10 +5,14 @@ var actualWidth, actualHeight;
 var body;
 var scale = 1;
 
-var lastMouseCoordinates1 =  [0,0];
-var mouseCoordinates1 =  [0,0];
-var lastMouseCoordinates2 =  [0,0];
-var mouseCoordinates2 =  [0,0];
+var tipCoordinates = {};
+var lastTipCoordinates = {};
+
+tipCoordinates[1] =  [0,0];
+tipCoordinates[2] =  [0,0];
+lastTipCoordinates[1] =  [0,0];
+lastTipCoordinates[2] =  [0,0];
+
 var mouseEnable1 = false;
 var mouseEnable2 = false;
 var mouseout = false;
@@ -161,22 +165,22 @@ function render(){
         //apply force
         GPU.setProgram("force");
         if (!mouseout && mouseEnable1){
-            GPU.setUniformForProgram("force", "u_mouseEnable[1]", 1.0, "1f");
-            GPU.setUniformForProgram("force", "u_mouseCoord[1]",
-                                     [mouseCoordinates1[0]*scale,
-                                      mouseCoordinates1[1]*scale], "2f");
-            GPU.setUniformForProgram("force", "u_mouseDir[1]",
-                                     [3*(mouseCoordinates1[0]-lastMouseCoordinates1[0])*scale,
-                3*(mouseCoordinates1[1]-lastMouseCoordinates1[1])*scale], "2f");
+            GPU.setUniformForProgram("force", "u_tipEnable[1]", 1.0, "1f");
+            GPU.setUniformForProgram("force", "u_tipCoord[1]",
+                                     [tipCoordinates[1][0]*scale,
+                                      tipCoordinates[1][1]*scale], "2f");
+            GPU.setUniformForProgram("force", "u_tipDir[1]",
+                                     [3*(tipCoordinates[1][0]-lastTipCoordinates[1][0])*scale,
+                3*(tipCoordinates[1][1]-lastTipCoordinates[1][1])*scale], "2f");
 
-            GPU.setUniformForProgram("force", "u_mouseEnable[2]", 1.0, "1f");
-            GPU.setUniformForProgram("force", "u_mouseCoord[2]", [(mouseCoordinates2[0])*scale, (25+mouseCoordinates2[1])*scale], "2f");
-            GPU.setUniformForProgram("force", "u_mouseDir[2]", [3*(mouseCoordinates2[0]-lastMouseCoordinates2[0])*scale,
-                3*(mouseCoordinates2[1]-lastMouseCoordinates2[1])*scale], "2f");
+            GPU.setUniformForProgram("force", "u_tipEnable[2]", 1.0, "1f");
+            GPU.setUniformForProgram("force", "u_tipCoord[2]", [(tipCoordinates[2][0])*scale, (25+tipCoordinates[2][1])*scale], "2f");
+            GPU.setUniformForProgram("force", "u_tipDir[2]", [3*(tipCoordinates[2][0]-lastTipCoordinates[2][0])*scale,
+                3*(tipCoordinates[2][1]-lastTipCoordinates[2][1])*scale], "2f");
             
         } else {
-            GPU.setUniformForProgram("force", "u_mouseEnable[1]", 0.0, "1f");
-            GPU.setUniformForProgram("force", "u_mouseEnable[2]", 0.0, "1f");
+            GPU.setUniformForProgram("force", "u_tipEnable[1]", 0.0, "1f");
+            GPU.setUniformForProgram("force", "u_tipEnable[2]", 0.0, "1f");
         }
         GPU.step("force", ["velocity"], "nextVelocity");
 
@@ -209,18 +213,20 @@ function render(){
         //add material
         GPU.setProgram("addMaterial");
         if (!mouseout && mouseEnable1){
-            GPU.setUniformForProgram("addMaterial", "u_mouseEnable[1]", 1.0, "1f");
-            GPU.setUniformForProgram("addMaterial", "u_mouseCoord[1]", mouseCoordinates1, "2f");
-            GPU.setUniformForProgram("addMaterial", "u_mouseLength[1]", Math.sqrt(Math.pow(3*(mouseCoordinates1[0]-lastMouseCoordinates1[0]),2)
-                +Math.pow(3*(mouseCoordinates1[1]-lastMouseCoordinates1[1]),2)), "1f");
+            GPU.setUniformForProgram("addMaterial", "u_tipEnable[1]", 1.0, "1f");
+            GPU.setUniformForProgram("addMaterial", "u_tipCoord[1]", tipCoordinates[1], "2f");
+            GPU.setUniformForProgram("addMaterial", "u_tipLength[1]",
+                                     Math.sqrt(Math.pow(3*(tipCoordinates[1][0]-lastTipCoordinates[1][0]),2)
+                +Math.pow(3*(tipCoordinates[1][1]-lastTipCoordinates[1][1]),2)), "1f");
 
-            GPU.setUniformForProgram("addMaterial", "u_mouseEnable[2]", 1.0, "1f");
-            GPU.setUniformForProgram("addMaterial", "u_mouseCoord[2]", mouseCoordinates2, "2f");
-            GPU.setUniformForProgram("addMaterial", "u_mouseLength[2]", Math.sqrt(Math.pow(3*(mouseCoordinates2[0]-lastMouseCoordinates2[0]),2)
-                +Math.pow(3*(mouseCoordinates2[1]-lastMouseCoordinates2[1]),2)), "1f");
+            GPU.setUniformForProgram("addMaterial", "u_tipEnable[2]", 1.0, "1f");
+            GPU.setUniformForProgram("addMaterial", "u_tipCoord[2]", tipCoordinates[2], "2f");
+            GPU.setUniformForProgram("addMaterial", "u_tipLength[2]",
+                                     Math.sqrt(Math.pow(3*(tipCoordinates[2][0]-lastTipCoordinates[2][0]),2)
+                +Math.pow(3*(tipCoordinates[2][1]-lastTipCoordinates[2][1]),2)), "1f");
         } else {
-            GPU.setUniformForProgram("addMaterial", "u_mouseEnable[1]", 0.0, "1f");
-            GPU.setUniformForProgram("addMaterial", "u_mouseEnable[2]", 0.0, "1f");
+            GPU.setUniformForProgram("addMaterial", "u_tipEnable[1]", 0.0, "1f");
+            GPU.setUniformForProgram("addMaterial", "u_tipEnable[2]", 0.0, "1f");
         }
         GPU.step("addMaterial", ["material"], "nextMaterial");
 
@@ -345,30 +351,17 @@ function resetWindow(){
 }
 
 function move2(x,y){
-    lastMouseCoordinates2 = mouseCoordinates2;
+    lastTipCoordinates[2] = tipCoordinates[2];
     var padding = 10;
     if (x<padding) x = padding;
     if (x>actualWidth-padding) x = actualWidth-padding;
     if (y<padding) y = padding;
     if (y>actualHeight-padding) y = actualHeight-padding;
-    mouseCoordinates2 = [x, actualHeight-y];
-}
-
-function onMouseMove2(e){
-    lastMouseCoordinates2 = mouseCoordinates2;
-    var x = e.clientX + 800;
-    var padding = 10;
-    if (x<padding) x = padding;
-    if (x>actualWidth-padding) x = actualWidth-padding;
-    var y = e.clientY + 200;
-    if (y<padding) y = padding;
-    if (y>actualHeight-padding) y = actualHeight-padding;
-//    mouseCoordinates2 = [x, actualHeight-y];
-    mouseCoordinates2 = [x, actualHeight-y];
+    tipCoordinates[2] = [x, actualHeight-y];
 }
 
 function onMouseMove(e){
-    lastMouseCoordinates1 = mouseCoordinates1;
+    lastTipCoordinates[1] = tipCoordinates[1];
     var x = e.clientX;
     var padding = 10;
     if (x<padding) x = padding;
@@ -376,7 +369,7 @@ function onMouseMove(e){
     var y = e.clientY;
     if (y<padding) y = padding;
     if (y>actualHeight-padding) y = actualHeight-padding;
-    mouseCoordinates1 = [x, actualHeight-y];
+    tipCoordinates[1] = [x, actualHeight-y];
     move2(e.clientX+400, e.clientY+100);
 }
 
