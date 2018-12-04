@@ -158,9 +158,9 @@
 
         uniform vec2 u_textureSize;
 
-        uniform vec2  u_tipCoord[3];
-        uniform float u_tipLength[3];
-        uniform float u_tipEnable[3];
+        uniform vec2  u_tipCoord[10];
+        uniform float u_tipLength[10];
+        uniform float u_tipEnable[10];
 
         uniform float u_reciprocalRadius;
 
@@ -169,7 +169,7 @@
 
             float currentMaterial = texture2D(u_material, fragCoord/u_textureSize).x;
 
-            for (int i=1; i<=2; i++) {
+            for (int i=1; i<10; i++) {
                 if (u_tipEnable[i] == 1.0){
                     vec2 pxDist = fragCoord - u_tipCoord[i];
                     currentMaterial += u_tipLength[i]*0.1*
@@ -188,9 +188,9 @@
 
         uniform vec2 u_textureSize;
 
-        uniform vec2  u_tipCoord[3];
-        uniform vec2  u_tipDir[3];
-        uniform float u_tipEnable[3];
+        uniform vec2  u_tipCoord[10];
+        uniform vec2  u_tipDir[10];
+        uniform float u_tipEnable[10];
 
         uniform float u_reciprocalRadius;
 
@@ -201,7 +201,7 @@
             vec2 fragCoord = gl_FragCoord.xy;
 
             vec2 currentVelocity = texture2D(u_velocity, fragCoord/u_textureSize).xy;
-            for (int i=0; i<=2; i++) {
+            for (int i=0; i<10; i++) {
                 if (u_tipEnable[i] == 1.0){
                     vec2 pxDist = fragCoord - u_tipCoord[i];
                     currentVelocity += u_tipDir[i]*u_dt*exp(-(pxDist.x*pxDist.x+pxDist.y*pxDist.y)*u_reciprocalRadius);

@@ -218,13 +218,13 @@ class LeapFluidControl
         if (pinch) {
             console.log("***** Pinch!!! *****");
             this.pinchStartPos = hand.palmPosition;
-            mouseEnable1 = true;
-            mouseEnable2 = true;
+            tip[1].enable = true;
+            tip[2].enable = true;
         }
         else {
             console.log("***** Pinch released!!! stop fluid dragging *****");
-            mouseEnable1 = false;
-            mouseEnable2 = false;
+            tip[1].enable = false;
+            tip[2].enable = false;
         }
     }
 
@@ -239,7 +239,7 @@ class LeapFluidControl
         var dz = z - pos0[1];
         console.log("x: "+x+"  y: "+y+"   z: "+z);
         console.log("dx: "+dx+"  dy: "+dy+"   dz: "+dz);
-        move2(x+200, y+200);
+        move(tip[2], x+200, y+200);
     }
     
     handleFrame(frame) {

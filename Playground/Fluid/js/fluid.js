@@ -8,13 +8,12 @@ var scale = 1;
 var tipCoordinates = {};
 var lastTipCoordinates = {};
 
-tipCoordinates[1] =  [0,0];
-tipCoordinates[2] =  [0,0];
-lastTipCoordinates[1] =  [0,0];
-lastTipCoordinates[2] =  [0,0];
+tip = {}
 
-var mouseEnable1 = false;
-var mouseEnable2 = false;
+for (var i=0; i<10; i++) {
+    tip[i] = { pos: [0,0], lastPos: [0,0], enable: false };
+}
+
 var mouseout = false;
 
 var paused = false;//while window is resizing
@@ -164,24 +163,21 @@ function render(){
 
         //apply force
         GPU.setProgram("force");
-        if (!mouseout && mouseEnable1){
-            GPU.setUniformForProgram("force", "u_tipEnable[1]", 1.0, "1f");
-            GPU.setUniformForProgram("force", "u_tipCoord[1]",
-                                     [tipCoordinates[1][0]*scale,
-                                      tipCoordinates[1][1]*scale], "2f");
-            GPU.setUniformForProgram("force", "u_tipDir[1]",
-                                     [3*(tipCoordinates[1][0]-lastTipCoordinates[1][0])*scale,
-                3*(tipCoordinates[1][1]-lastTipCoordinates[1][1])*scale], "2f");
-
-            GPU.setUniformForProgram("force", "u_tipEnable[2]", 1.0, "1f");
-            GPU.setUniformForProgram("force", "u_tipCoord[2]", [(tipCoordinates[2][0])*scale, (25+tipCoordinates[2][1])*scale], "2f");
-            GPU.setUniformForProgram("force", "u_tipDir[2]", [3*(tipCoordinates[2][0]-lastTipCoordinates[2][0])*scale,
-                3*(tipCoordinates[2][1]-lastTipCoordinates[2][1])*scale], "2f");
-            
-        } else {
-            GPU.setUniformForProgram("force", "u_tipEnable[1]", 0.0, "1f");
-            GPU.setUniformForProgram("force", "u_tipEnable[2]", 0.0, "1f");
+        for (var i=1; i<10; i++) {
+            let tp = tip[i];
+            if (tp.enable) {
+                GPU.setUniformForProgram("force", "u_tipEnable["+i+"]", 1.0, "1f");
+                GPU.setUniformForProgram("force", "u_tipCoord["+i+"]",
+                                         [tp.pos[0]*scale, tp.pos[1]*scale], "2f");
+                GPU.setUniformForProgram("force", "u_tipDir["+i+"]",
+                                         [3*(tp.pos[0]-tp.lastPos[0])*scale,
+                                          3*(tp.pos[1]-tp.lastPos[1])*scale], "2f");
+            }
+            else {
+                GPU.setUniformForProgram("force", "u_tipEnable["+i+"]", 0.0, "1f");
+            }
         }
+
         GPU.step("force", ["velocity"], "nextVelocity");
 
         // GPU.swapTextures("velocity", "nextVelocity");
@@ -212,21 +208,18 @@ function render(){
 
         //add material
         GPU.setProgram("addMaterial");
-        if (!mouseout && mouseEnable1){
-            GPU.setUniformForProgram("addMaterial", "u_tipEnable[1]", 1.0, "1f");
-            GPU.setUniformForProgram("addMaterial", "u_tipCoord[1]", tipCoordinates[1], "2f");
-            GPU.setUniformForProgram("addMaterial", "u_tipLength[1]",
-                                     Math.sqrt(Math.pow(3*(tipCoordinates[1][0]-lastTipCoordinates[1][0]),2)
-                +Math.pow(3*(tipCoordinates[1][1]-lastTipCoordinates[1][1]),2)), "1f");
-
-            GPU.setUniformForProgram("addMaterial", "u_tipEnable[2]", 1.0, "1f");
-            GPU.setUniformForProgram("addMaterial", "u_tipCoord[2]", tipCoordinates[2], "2f");
-            GPU.setUniformForProgram("addMaterial", "u_tipLength[2]",
-                                     Math.sqrt(Math.pow(3*(tipCoordinates[2][0]-lastTipCoordinates[2][0]),2)
-                +Math.pow(3*(tipCoordinates[2][1]-lastTipCoordinates[2][1]),2)), "1f");
-        } else {
-            GPU.setUniformForProgram("addMaterial", "u_tipEnable[1]", 0.0, "1f");
-            GPU.setUniformForProgram("addMaterial", "u_tipEnable[2]", 0.0, "1f");
+        for (var i=1; i<10; i++) {
+            var tp = tip[i];
+            if (!mouseout && tp.enable) {
+                GPU.setUniformForProgram("addMaterial", "u_tipEnable["+i+"]", 1.0, "1f");
+                GPU.setUniformForProgram("addMaterial", "u_tipCoord[" +i+"]", tp.pos, "2f");
+                GPU.setUniformForProgram("addMaterial", "u_tipLength["+i+"]",
+                                         Math.sqrt( Math.pow(3*(tp.pos[0]-tp.lastPos[0]),2)
+                                                    +Math.pow(3*(tp.pos[1]-tp.lastPos[1]),2)), "1f");
+            }
+            else {
+                GPU.setUniformForProgram("addMaterial", "u_tipEnable["+i+"]", 1.0, "1f");
+            }
         }
         GPU.step("addMaterial", ["material"], "nextMaterial");
 
@@ -350,18 +343,18 @@ function resetWindow(){
     paused = false;
 }
 
-function move2(x,y){
-    lastTipCoordinates[2] = tipCoordinates[2];
+function move(tip, x,y){
+    tip.lastPos = tip.pos;
     var padding = 10;
     if (x<padding) x = padding;
     if (x>actualWidth-padding) x = actualWidth-padding;
     if (y<padding) y = padding;
     if (y>actualHeight-padding) y = actualHeight-padding;
-    tipCoordinates[2] = [x, actualHeight-y];
+    tip.pos = [x, actualHeight-y];
 }
 
 function onMouseMove(e){
-    lastTipCoordinates[1] = tipCoordinates[1];
+    tip[1].lastPos = tip[1].pos;
     var x = e.clientX;
     var padding = 10;
     if (x<padding) x = padding;
@@ -369,15 +362,19 @@ function onMouseMove(e){
     var y = e.clientY;
     if (y<padding) y = padding;
     if (y>actualHeight-padding) y = actualHeight-padding;
-    tipCoordinates[1] = [x, actualHeight-y];
-    move2(e.clientX+400, e.clientY+100);
+    tip[1].pos = [x, actualHeight-y];
+    move(tip[2], e.clientX+400, e.clientY+100);
+    move(tip[3], e.clientX-100, e.clientY+400);
 }
 
 function onMouseDown(){
-    mouseEnable1 = true;
+    tip[1].enable = true;
+    tip[2].enable = true;
+    tip[3].enable = true;
 }
 
 function onMouseUp(){
-    mouseEnable1 = false;
-    mouseEnable2 = false;
+    tip[1].enable = false;
+    tip[2].enable = false;
+    tip[3].enable = false;
 }
