@@ -3,6 +3,7 @@ function getClockTime(){
     return new Date().getTime()/1000;
 };
 
+var LAST_HAND = null;
 var lpc = null;
 
 // Store frame for motion functions
@@ -194,6 +195,7 @@ class LeapFluidControl
         this.prevGrab = false;
         this.prevPinch = false;
 	this.lastSwitchTime = 0;
+        this.activeHands = {};
         //this.leapView = new LeapView();
     }
 
@@ -214,32 +216,36 @@ class LeapFluidControl
 	console.log("*********************** dt: "+dt);
     }
 
-    onPinchEvent(frame, hand, pinch) {
+    onPinchEvent(frame, tip, hand, pinch) {
         if (pinch) {
             console.log("***** Pinch!!! *****");
             this.pinchStartPos = hand.palmPosition;
-            tip[1].enable = true;
-            tip[2].enable = true;
+            tip.enable = true;
         }
         else {
             console.log("***** Pinch released!!! stop fluid dragging *****");
-            tip[1].enable = false;
-            tip[2].enable = false;
+            tip.enable = false;
         }
     }
 
-    onPinchMotion(frame, hand) {
+    onPinchMotion(tip, frame, hand) {
         var pos = hand.palmPosition;
         var pos0 = this.pinchStartPos;
         var x = pos[0];
         var y = pos[2];
         var z = pos[1];
+/*
         var dx = x - pos0[0];
         var dy = y - pos0[2];
         var dz = z - pos0[1];
         console.log("x: "+x+"  y: "+y+"   z: "+z);
         console.log("dx: "+dx+"  dy: "+dy+"   dz: "+dz);
-        move(tip[2], x+200, y+200);
+*/
+        var x0 = 500;
+        var y0 = 300;
+        var s = 3.0;
+        tip.enable = true;
+        move(tip, s*x+x0, s*y+y0);
     }
     
     handleFrame(frame) {
@@ -248,6 +254,7 @@ class LeapFluidControl
         var str = "frameNum: "+this.frameNum+"<br>\n";
         for (var i = 0; i < frame.hands.length; i++) {
             var hand = frame.hands[i];
+            console.log("hand id "+hand.id+" "+hand.type);
             var hpos = hand.palmPosition;
             var hx = hpos[0];
             var hy = hpos[2];
@@ -270,16 +277,19 @@ class LeapFluidControl
             handString += "Confidence: " + hand.confidence + "<br />";
             handString += "Arm direction: " + vectorToString(hand.arm.direction()) + "<br />";
             */
+            var tp = tip[4];
+            if (hand.type == "left")
+                tp = tip[5];
             if (this.grab != this.prevGrab) {
-                this.onGrabEvent(frame, hand, this.grab);
+                this.onGrabEvent(frame, tp, hand, this.grab);
                 this.prevGrab = this.grab;
             }
             if (this.pinch != this.prevPinch) {
-                this.onPinchEvent(frame, hand, this.pinch);
+                this.onPinchEvent(frame, tp, hand, this.pinch);
                 this.prevPinch = this.pinch;
             }
             if (this.pinch)
-                this.onPinchMotion(frame, hand);
+                this.onPinchMotion(tp, frame, hand);
         }
         $("#portalControl").html(str);
         if (this.leapView)
