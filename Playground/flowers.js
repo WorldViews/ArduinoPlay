@@ -2,7 +2,9 @@
 // This code was taken from
 // https://www.html5canvastutorials.com/advanced/html5-canvas-blooming-flowers-effect/
 
-var c = document.getElementById("c");
+"use strict";
+
+var c = document.getElementById("flowerCanvas");
 var ctx = c.getContext("2d");
 var cw = c.width = window.innerWidth;
 var ch = c.height = window.innerHeight;
@@ -12,6 +14,7 @@ var rad = Math.PI / 180;
 var howMany = 10;
 // size of the tangent
 var t = 1 / 5;
+var requestId;
 
 ctx.strokeStyle = "white";
 ctx.shadowBlur = 5;
@@ -20,10 +23,23 @@ ctx.shadowOffsetY = 2;
 ctx.shadowColor = "#333";
 ctx.globalAlpha = .85;
 
-function getFlower() {
+function randomIntFromInterval(mn, mx) {
+  return ~~(Math.random() * (mx - mn + 1) + mn);
+}
+
+function getRanPt() {
+  return {
+    x: ~~(Math.random() * cw) + 1,
+    y: ~~(Math.random() * ch) + 1
+  }
+}
+
+function getFlower(pt) {
     var f = {};
-    f.cx = ~~(Math.random() * cw) + 1;
-    f.cy = ~~(Math.random() * ch) + 1;
+    if (!pt)
+      pt = getRanPt();
+    f.cx = pt.x;
+    f.cy = pt.y;
     f.R = randomIntFromInterval(20, 50);
     f.Ri = randomIntFromInterval(5, 7) / 10;
     f.k = randomIntFromInterval(5, 10) / 10;
@@ -36,10 +52,15 @@ function getFlower() {
     return f;
 }
 
+function addFlower(pt) {
+  console.log("Adding flower");
+  flowers.push(getFlower(pt));
+}
+
 var colors = ["#930c37", "#ea767a", "#ee6133", "#ecac43", "#fb9983", "#f9bc9f", "#f8ed38", "#a8e3f9", "#d1f2fd", "#ecd5f5", "#fee4fd", "#8520b4", "#FA2E59", "#FF703F", "#FF703F", "#F7BC05", "#ECF6BB", "#76BCAD"];
 var flowers = [];
 for (var hm = 0; hm < howMany; hm++) {
-    flowers[hm] = getFlower();
+  addFlower();
 }
 
 function buildRy(R, k, cx, cy, nP, spacing) {
@@ -186,9 +207,7 @@ function controlPoints(p) {
   return pc;
 }
 
-function randomIntFromInterval(mn, mx) {
-  return ~~(Math.random() * (mx - mn + 1) + mn);
-}
+
 
 for (var f = 0; f < flowers.length; f++) {
   var R = flowers[f].R;
@@ -208,6 +227,7 @@ for (var f = 0; f < flowers.length; f++) {
     drawCurve(petals[i]);
   }
 }
+
 requestId = window.requestAnimationFrame(update);
 
 /*
@@ -219,3 +239,20 @@ window.setTimeout(function() {
 }, 6000)
 
 */
+window.setInterval(e => {
+  if (flowers.length < 200)
+    addFlower();
+  }, 1000);
+
+
+function handleClick(e) {
+  var offset = $(this).offset();
+  var x = e.pageX - offset.left;
+  var y = e.pageY - offset.top;
+  console.log("click ", x, y);
+  addFlower({x,y});
+}
+
+$(document).ready(function() {
+  $('#flowerCanvas').click(handleClick);
+});
