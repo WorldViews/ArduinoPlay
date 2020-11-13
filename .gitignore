@@ -5,4 +5,6 @@ node_modules/*
 */junk/*
 */*/junk/*
 junk/*
+dummy/*
+CircuitPy/backup*
 package-lock.json

@@ -1,0 +1,55 @@
+<html>
+  <head>
+  </head>
+  <body>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+      let port = null;
+      
+      if ("serial" in navigator) {
+	  console.log("serial available");
+      }
+
+      async function read(port) {
+	  console.log("starting reader for port");
+	  const reader = port.readable.getReader();
+	  const decoder = new TextDecoder("utf-8");
+	  // Listen to data coming from the serial device.
+	  while (true) {
+	      const { value, done } = await reader.read();
+	      if (done) {
+		  // Allow the serial port to be closed later.
+		  reader.releaseLock();
+		  break;
+	      }
+	      // bytes is a Uint8Array.
+	      console.log("bytes:", value);
+	      //var uint8array = new TextEncoder("utf-8").encode("¢");
+	      var str = decoder.decode(value);
+	      console.log("str:", str)
+	  }
+      }
+
+      async function setup() {
+	  // Prompt user to select any serial port.
+	  console.log("setup");
+	  port = await navigator.serial.requestPort();
+	  const info = port.getInfo();
+	  const { usbProductId, usbVendorId } = info;
+	  console.log("info", info);
+	  console.log("usbProductId", usbProductId);
+	  // Wait for the serial port to open.
+	  console.log("opening");
+	  await port.open({ baudRate: 9600 });
+	  console.log("opened")
+	  read(port);
+      }
+      
+      $(document).ready(() => {
+	  $("#start").click(setup);
+      });
+      
+    </script>
+    <button id="start">start</button>
+  </body>
+</html>
