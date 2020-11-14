@@ -3,7 +3,7 @@ var argv = process.argv;
 var port = "3000";
 //var port = 8089;
 var addr = "0.0.0.0";
-//var SerialPort = require("serialport");
+var SerialPort = require("serialport");
 var comPortPath = "com3";
 var comPort = null;
 
@@ -44,14 +44,15 @@ function findDevice() {
 }
 */
 
-function csvEncode(obj) {
+function csvEncode(obj)
+{
     var str = "";
     for (var key in obj) {
         if (str != "")
             str += ", ";
-        str += (key + ", " + obj[key]);
+        str += (key +", "+obj[key]);
     }
-    return str + "\n";
+    return str+"\n";
 }
 
 console.log("***** Running server2.js ****");
@@ -62,8 +63,8 @@ if (argv.length > 3)
     port = argv[3];
 
 
-console.log("Using com port: " + comPortPath);
-//var Playground = require("playground-io");
+console.log("Using com port: "+comPortPath);
+var Playground = require("playground-io");
 var five = require("johnny-five");
 var fs = require('fs');
 var sock = null;
@@ -104,7 +105,7 @@ app.use(express.static(__dirname + "/.."));
 app.use(bodyParser.json());
 
 app.get("/", function (req, res) {
-    res.sendFile(__dirname + "/index.html");
+  res.sendFile(__dirname + "/index.html");
 });
 
 app.get("/playBox", function (req, res) {
@@ -113,14 +114,14 @@ app.get("/playBox", function (req, res) {
 });
 
 app.get("/realtime", function (req, res) {
-    res.sendFile(__dirname + "/realtime.html");
+  res.sendFile(__dirname + "/realtime.html");
 });
 
 app.get("/logEvent", function (req, res) {
     var q = req.query;
-    console.log("event: " + q);
+    console.log("event: "+ q);
     var str = csvEncode(q);
-    fs.appendFile("eventLog.txt", str, encoding = 'utf8', err => {
+    fs.appendFile("eventLog.txt", str, encoding='utf8', err => {
         if (err)
             console.log("Err appending to file", err);
     });
@@ -128,7 +129,7 @@ app.get("/logEvent", function (req, res) {
 });
 
 app.get("/*", function (req, res) {
-    console.log("*** " + req.path);
+    console.log("*** "+req.path);
     res.sendFile(__dirname + req.path);
 });
 
@@ -147,7 +148,7 @@ function setupPin(pin, pinName) {
             return;
         }
         sendMessage("pin.change", data);
-        sendMessage("pin.data", { pin: pinName, data: data });
+        sendMessage("pin.data", {pin: pinName, data: data});
     });
     pin.on("high", (data) => {
         //console.log("pin "+pinName+" "+data);
@@ -156,7 +157,7 @@ function setupPin(pin, pinName) {
             return;
         }
         //sendMessage("pin.data", {pin: pinName, data: "high"});
-        sendMessage("pin.data", { pin: pinName, data: 1 });
+        sendMessage("pin.data", {pin: pinName, data: 1});
     });
     pin.on("low", (data) => {
         //console.log("pin "+pinName+" "+data);
@@ -165,15 +166,16 @@ function setupPin(pin, pinName) {
             return;
         }
         //sendMessage("pin.data", {pin: pinName, data: "low"});
-        sendMessage("pin.data", { pin: pinName, data: 0 });
+        sendMessage("pin.data", {pin: pinName, data: 0});
     });
 }
 
-function setPin(pinName, value) {
-    console.log("set pin " + pinName + " " + value);
+function setPin(pinName, value)
+{
+    console.log("set pin "+pinName+" "+value);
     var pin = pins[pinName];
     if (!pin) {
-        console.log("No such pin as " + pinName);
+        console.log("No such pin as "+pinName);
         return;
     }
     if (value == "low")
@@ -182,123 +184,95 @@ function setPin(pinName, value) {
         pin.high();
     else
         five.Pin.write(pin, value);
-    //    five.Pin.read(pin, val => {
-    //        console.log("pin "+pinName+" has value "+val);
-    //    });
-}
-
-function setupPiezo(board) {
-    // Creates a piezo object and defines the pin to be used for the signal
-    console.log("Setup Piezo");
-    var piezo = new five.Piezo("A0sss");
-
-    // Injects the piezo into the repl
-    board.repl.inject({
-        piezo: piezo
-    });
-
-    // Plays a song
-    console.log("play song");
-    piezo.play({
-        // song is composed by an array of pairs of notes and beats
-        // The first argument is the note (null means "no note")
-        // The second argument is the length of time (beat) of the note (or non-note)
-        song: [
-            ["C4", 1 / 4],
-            ["D4", 1 / 4],
-            ["F4", 1 / 4],
-            ["D4", 1 / 4],
-            ["A4", 1 / 4],
-            [null, 1 / 4],
-            ["A4", 1],
-            ["G4", 1],
-            [null, 1 / 2],
-            ["C4", 1 / 4],
-            ["D4", 1 / 4],
-            ["F4", 1 / 4],
-            ["D4", 1 / 4],
-            ["G4", 1 / 4],
-            [null, 1 / 4],
-            ["G4", 1],
-            ["F4", 1],
-            [null, 1 / 2]
-        ],
-        tempo: 100
-    });
-    // Plays the same song with a string representation
-    /*
-    piezo.play({
-        // song is composed by a string of notes
-        // a default beat is set, and the default octave is used
-        // any invalid note is read as "no note"
-        song: "C D F D A - A A A A G G G G - - C D F D G - G G G G F F F F - -",
-        beats: 1 / 4,
-        tempo: 100
-    });
-    */
-   console.log("done with setupPizeo");
+//    five.Pin.read(pin, val => {
+//        console.log("pin "+pinName+" has value "+val);
+//    });
 }
 
 function setupBoard(comPortPath) {
     setupInProgress = true;
     //var comPort = "com4";
-    console.log("Getting five.Board for " + comPortPath);
-    board = new five.Board({ port: comPortPath });
-    var io = board.io;
-    comPort = io.transport;
-    console.log("board:", board);
-    board.on("ready", function () {
+    console.log("Getting SerialPort for "+comPortPath);
+    comPort = new SerialPort(comPortPath,
+                             (err) => {
+                                 console.log("got callback: "+err);
+                                 setupInProgress = false;
+                             },
+                             (err) => {
+                                 console.log("got error callback: "+err);
+                                 setupInProgress = false;
+                             });
+    if (!setupInProgress) {
+        console.log("Failed to get board...");
+        return;
+    }
+    console.log("getting five.Board");
+    board = new five.Board({
+        io: new Playground({
+            port: comPort,
+
+            // Passing Firmata options through:
+            // Circuit Playground Firmata seems not to report version before timeout,
+            // lower timeout to reduce initial connection time.
+            reportVersionTimeout: 200
+        })
+    });
+
+    board.on("ready", function() {
         console.log("**** board ready - ****");
         //console.log(board);
         //console.log("comPort:", comPort);
         setupInProgress = false;
-        if (!board.isConnected) {
+        if (!comPort.isOpen) {
             console.log("aborting board initialization - com port not open");
             return;
         }
         console.log("Getting led pin 13 for this board");
-        led = new five.Led({ pin: 13, board: board });
+        led = new five.Led({pin: 13, board: board});
         console.log("Getting servo for this board");
-        servo = new five.Servo({ pin: 12, board: board });
+        servo = new five.Servo({pin: 12, board: board});
         for (var pinName in pins) {
-            console.log("Creating pin " + pinName);
-            var pin = new five.Pin({
-                pin: pinName,
-                mode: pinModes[pinName],
-                board: board
-            });
+            console.log("Creating pin "+pinName);
+            var pin = new five.Pin({pin: pinName,
+                                    mode: pinModes[pinName],
+                                    board: board});
             pins[pinName] = pin;
             setupPin(pin, pinName);
-        }
-        led.blink(500);
-        light = new five.Light({ pin: 5, type: "analog", board: board });
-        //console.log("Pin:", pin);
-        console.log("Got light...");
-        if (light) {
-            light.on("change", (data) => {
-                //console.log("light: "+JSON.stringify(data));
-                console.log("lux:", data.lux);
-                sendMessage("light.change", data);
+            /*
+            pin.on("data", (data) => {
+                console.log("pin "+pinName+" "+data);
+                if (pin != pins[pinName]) {
+                    console.log("ignore old pin...");
+                    return;
+                }
+                sendMessage("pin.change", data);
             });
+            */
         }
-
-        setupPiezo(board);
-        /*
+        light = new five.Light({pin: 5, type: "analog", board: board});
+        led.blink(1000);
+        //console.log("Pin:", pin);
+    
         var accelerometer = new five.Accelerometer({
-            // controller: Playground.Accelerometer,
-            pins: ["A0", "A1"],
-            controller: "LIS3DH",
+            controller: Playground.Accelerometer,
             board: board
         });
 
         accelerometer.on("change", (data) => {
-            console.log("sending acc.change " + data.x + " " + data.y + " " + data.z);
-            var acc = { x: data.x, y: data.y, z: data.z };
+            //console.log("sending acc.change "+data.x+" "+data.y+" "+data.z);
+            var acc = {x: data.x, y: data.y, z: data.z};
             //sock.emit("acc.change", data.x+" "+data.y+" "+data.z);
             sendMessage("acc.change", acc);
         });
-        */
-       
+
+        if (light) {
+            light.on("change", (data) => {
+                //console.log("light: "+JSON.stringify(data));
+                //console.log("lux:", data.lux);
+                sendMessage("light.change", data);
+            });
+        }
+
         board.on("exit", () => {
             console.log("Board exit...");
         });
@@ -315,14 +289,12 @@ var tickCount = 0;
 function heartbeat() {
     tickCount++;
     var status = (comPort && comPort.isOpen) ? "open" : "closed";
-    console.log("tick... " + tickCount + " " + port + " " + comPortPath + " " + status);
+    console.log("tick... "+tickCount+" "+port+" "+comPortPath+" "+status);
     if (sock) {
-        msg = {
-            type: 'status', portPath: comPortPath,
-            //deviceId: deviceId,
-            //deviceName: deviceName,
-            gen: tickCount, haveBoard: false
-        };
+        msg = {type: 'status', portPath: comPortPath,
+               //deviceId: deviceId,
+               //deviceName: deviceName,
+               gen: tickCount, haveBoard: false};
         var pin = pins["A9"];
         if (pin && comPort && comPort.isOpen)
             msg.haveBoard = true;
@@ -348,17 +320,19 @@ function sendMessage(mtype, msg) {
     });
 }
 
-function handleDisconnect(socket) {
+function handleDisconnect(socket)
+{
     console.log("handleDisconnect: ", socket);
     var index = activeSockets.indexOf(socket);
     if (index >= 0) {
         activeSockets.splice(index, 1);
     }
-    console.log("activeSockets " + activeSockets.length);
+    console.log("activeSockets "+activeSockets.length);
 }
 
-function setPins(msg) {
-    console.log("setPins: ", msg);
+function setPins(msg)
+{
+    console.log("setPins: ",msg);
     var ops = msg;
     ops.forEach(op => {
         var pinName = op.pin;
@@ -367,21 +341,21 @@ function setPins(msg) {
     });
 }
 
-function showState(pinName, state) {
-    console.log("state for pin " + pinName);
+function showState(pinName, state)
+{
+    console.log("state for pin "+pinName);
     console.log(JSON.stringify(state));
-    let msg = {
-        msgType: 'pinStatus', pin: pinName,
-        state: state
-    };
+    let msg = {msgType: 'pinStatus', pin: pinName,
+               state: state};
     sendMessage(msg);
 }
 
-function requestStatus(msg) {
+function requestStatus(msg)
+{
     console.log("showStatus");
     for (let pinName in pins) {
         let pin = pins[pinName];
-        console.log("querying status of pin " + pinName);
+        console.log("querying status of pin "+pinName);
         pin.query((state) => showState(pinName, state))
     }
 }
@@ -393,32 +367,32 @@ setupBoard(comPortPath);
 
 //var io = require("socket.io")(server);
 var io = require("socket.io").listen(server);
-io.on("connection", function (socket) {
+io.on("connection", function(socket) {
     sock = socket;
     console.log("Got connection...");
     activeSockets.push(socket);
     console.log("activeSOckets: " + activeSockets.length);
-    socket.on("change:interval", function (data) {
-        console.log("data: " + data);
+    socket.on("change:interval", function(data) {
+        console.log("data: "+data);
         led.blink(data);
     });
-    socket.on("servo.set", function (data) {
+    socket.on("servo.set", function(data) {
         //console.log("servo value: "+data);
         if (servo) {
             servo.to(data);
         }
         else
-            console.log("No servo " + data);
+            console.log("No servo "+data);
     });
-    socket.on("pins.set", function (msg) {
+    socket.on("pins.set", function(msg) {
         setPins(msg);
     });
-    socket.on("requestStatus", function (msg) {
+    socket.on("requestStatus", function(msg) {
         requestStatus(msg);
     });
     socket.on('disconnect', obj => handleDisconnect(socket, obj));
 });
 
-console.log("listening on " + addr + " port: " + port);
+console.log("listening on "+addr+" port: "+port);
 server.listen(port, addr);
 setInterval(heartbeat, 2000);

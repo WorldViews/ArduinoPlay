@@ -1,0 +1,19 @@
+{
+  "name": "circuitplay",
+  "version": "1.0.0",
+  "description": "",
+  "dependencies": {
+    "body-parser": "^1.17.2",
+    "cors": "^2.8.4",
+    "etherport-client": "*",
+    "express": "^4.15.3",
+    "johnny-five": "0.14.3",
+    "morgan": "^1.8.2",
+    "npm": "^6.4.1",
+    "playground-io": "0.6.0",
+    "socket.io": "^2.0.3",
+    "socket.io-client": "^2.0.3"
+  },
+  "author": "",
+  "license": "ISC"
+}
