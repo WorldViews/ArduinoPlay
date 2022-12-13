@@ -6,7 +6,7 @@
     "body-parser": "^1.17.2",
     "cors": "^2.8.4",
     "etherport-client": "*",
-    "express": "^4.15.3",
+    "express": "^4.17.3",
     "johnny-five": "*",
     "morgan": "^1.8.2",
     "npm": "^6.4.1",
